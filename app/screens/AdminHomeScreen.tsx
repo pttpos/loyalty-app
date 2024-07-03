@@ -1,9 +1,10 @@
 // screens/AdminHomeScreen.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Text, StyleSheet, TextInput, Button, Alert, Keyboard, TouchableWithoutFeedback, Animated } from "react-native";
+import { View, Text, StyleSheet, TextInput, Alert, Keyboard, TouchableWithoutFeedback, Animated, TouchableOpacity, Modal } from "react-native";
+import QRCode from 'react-native-qrcode-svg';
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { db } from "../services/firebase";
-import { doc, updateDoc, getDoc, collection, query, where, getDocs } from "firebase/firestore";
+import { doc, updateDoc, getDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
 
 const AdminHomeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -11,6 +12,8 @@ const AdminHomeScreen = () => {
   const [email, setEmail] = useState("");
   const [points, setPoints] = useState("");
   const [userPoints, setUserPoints] = useState<number | null>(null);
+  const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
+  const [modalVisible, setModalVisible] = useState(false);
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -57,7 +60,7 @@ const AdminHomeScreen = () => {
       const userDoc = await getDoc(userRef);
 
       if (userDoc.exists()) {
-        const currentPoints = userDoc.data().points || 0;
+        const currentPoints = userDoc.data()?.points || 0;
         await updateDoc(userRef, {
           points: currentPoints + parseInt(points, 10),
         });
@@ -97,6 +100,31 @@ const AdminHomeScreen = () => {
     }
   }, [email, points, addPoints]);
 
+  const handleGenerateQRCode = async () => {
+    if (!points) {
+      Alert.alert("Please enter points");
+      return;
+    }
+
+    try {
+      const qrCodeRef = await addDoc(collection(db, "qrcodes"), {
+        points: parseInt(points, 10),
+        used: false,
+        createdAt: new Date(),
+      });
+
+      setQrCodeValue(qrCodeRef.id);
+      setModalVisible(true);
+    } catch (error) {
+      Alert.alert("Error generating QR code:", (error as Error).message);
+    }
+  };
+
+  const handlePrintQRCode = () => {
+    // Add your print QR code logic here
+    alert('Print QR Code');
+  };
+
   if (hasPermission === null) {
     return <Text>Requesting for camera permission</Text>;
   }
@@ -113,8 +141,12 @@ const AdminHomeScreen = () => {
           <View style={styles.resultContainer}>
             <Text style={styles.resultText}>User Email: {email}</Text>
             <Text style={styles.resultText}>Current Points: {userPoints}</Text>
-            <Button title="Add More Points" onPress={handleAddPointsByEmail} />
-            <Button title="Scan Again" onPress={() => { setScanned(false); setUserPoints(null); Animated.timing(scaleAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start(); }} />
+            <TouchableOpacity style={styles.button} onPress={handleAddPointsByEmail}>
+              <Text style={styles.buttonText}>Add More Points</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.button} onPress={() => { setScanned(false); setUserPoints(null); Animated.timing(scaleAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start(); }}>
+              <Text style={styles.buttonText}>Scan Again</Text>
+            </TouchableOpacity>
           </View>
         ) : (
           <Animated.View style={[styles.scannerContainer, { transform: [{ scale: scaleAnim }] }]}>
@@ -142,6 +174,7 @@ const AdminHomeScreen = () => {
             onChangeText={setEmail}
             keyboardType="email-address"
             autoCapitalize="none"
+            placeholderTextColor="#888"
           />
           <TextInput
             style={styles.input}
@@ -149,9 +182,44 @@ const AdminHomeScreen = () => {
             value={points}
             onChangeText={setPoints}
             keyboardType="numeric"
+            placeholderTextColor="#888"
           />
-          <Button title="Add Points by Email" onPress={handleAddPointsByEmail} />
+          <TouchableOpacity style={styles.button} onPress={handleAddPointsByEmail}>
+            <Text style={styles.buttonText}>Add Points by Email</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.button} onPress={handleGenerateQRCode}>
+            <Text style={styles.buttonText}>Generate QR Code</Text>
+          </TouchableOpacity>
         </View>
+
+        <Modal
+          animationType="slide"
+          transparent={true}
+          visible={modalVisible}
+          onRequestClose={() => {
+            setModalVisible(!modalVisible);
+          }}
+        >
+          <View style={styles.modalContainer}>
+            <View style={styles.modalView}>
+              <Text style={styles.modalTitle}>QR Code</Text>
+              {qrCodeValue && (
+                <View style={styles.qrContainer}>
+                  <QRCode value={qrCodeValue} size={200} />
+                </View>
+              )}
+              <TouchableOpacity style={styles.button} onPress={handlePrintQRCode}>
+                <Text style={styles.buttonText}>Print QR Code</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.button, styles.buttonClose]}
+                onPress={() => setModalVisible(!modalVisible)}
+              >
+                <Text style={styles.buttonText}>Close</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </Modal>
       </View>
     </TouchableWithoutFeedback>
   );
@@ -163,11 +231,14 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
+    backgroundColor: "#f4f4f4",
   },
   title: {
-    fontSize: 24,
+    fontSize: 28,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: "#333",
+    textAlign: 'center',
   },
   scannerContainer: {
     flex: 1,
@@ -182,6 +253,7 @@ const styles = StyleSheet.create({
   resultText: {
     fontSize: 18,
     marginBottom: 10,
+    color: "#333",
   },
   inputContainer: {
     flex: 1,
@@ -190,13 +262,13 @@ const styles = StyleSheet.create({
   },
   input: {
     height: 50,
-    borderColor: '#444',
+    borderColor: '#ccc',
     borderWidth: 1,
-    borderRadius: 8,
-    paddingHorizontal: 10,
-    marginBottom: 10,
-    backgroundColor: '#333',
-    color: '#fff',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    marginBottom: 15,
+    backgroundColor: '#fff',
+    color: '#333',
   },
   scannerOverlay: {
     position: 'absolute',
@@ -225,6 +297,51 @@ const styles = StyleSheet.create({
   bottomOverlay: {
     flex: 1,
     backgroundColor: overlayColor,
+  },
+  button: {
+    backgroundColor: '#1e90ff',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
+  },
+  modalView: {
+    width: 300,
+    backgroundColor: 'white',
+    borderRadius: 10,
+    padding: 20,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  qrContainer: {
+    marginVertical: 20,
+    alignItems: "center",
+  },
+  buttonClose: {
+    backgroundColor: '#ff6347',
   },
 });
 
