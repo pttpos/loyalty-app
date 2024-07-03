@@ -1,9 +1,8 @@
-// screens/AdminHomeScreen.tsx
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { View, Text, StyleSheet, TextInput, Alert, Keyboard, TouchableWithoutFeedback, Animated, TouchableOpacity, Modal } from "react-native";
 import QRCode from 'react-native-qrcode-svg';
 import { BarCodeScanner } from "expo-barcode-scanner";
-import { db } from "../services/firebase";
+import { db, auth } from "../services/firebase";
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
 
 const AdminHomeScreen = () => {
@@ -12,8 +11,8 @@ const AdminHomeScreen = () => {
   const [email, setEmail] = useState("");
   const [points, setPoints] = useState("");
   const [userPoints, setUserPoints] = useState<number | null>(null);
-  const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -39,6 +38,7 @@ const AdminHomeScreen = () => {
 
   const fillEmailAndPointsFromUID = useCallback(async (uid: string) => {
     try {
+      console.log(`Attempting to retrieve user with UID: ${uid}`);
       const userRef = doc(db, 'users', uid);
       const userDoc = await getDoc(userRef);
 
@@ -46,11 +46,14 @@ const AdminHomeScreen = () => {
         const userData = userDoc.data();
         setEmail(userData.email);
         setUserPoints(userData.points || 0);
+        console.log(`Retrieved user data: ${JSON.stringify(userData)}`);
       } else {
         Alert.alert("User not found.");
+        console.log("User not found.");
       }
     } catch (error) {
       Alert.alert('Error retrieving user:', (error as Error).message);
+      console.error('Error retrieving user:', error);
     }
   }, []);
 
@@ -141,7 +144,7 @@ const AdminHomeScreen = () => {
           <View style={styles.resultContainer}>
             <Text style={styles.resultText}>User Email: {email}</Text>
             <Text style={styles.resultText}>Current Points: {userPoints}</Text>
-            <TouchableOpacity style={styles.button} onPress={handleAddPointsByEmail}>
+            <TouchableOpacity style={styles.button} onPress={() => addPoints(email)}>
               <Text style={styles.buttonText}>Add More Points</Text>
             </TouchableOpacity>
             <TouchableOpacity style={styles.button} onPress={() => { setScanned(false); setUserPoints(null); Animated.timing(scaleAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start(); }}>

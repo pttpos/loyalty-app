@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Button, Alert, TouchableOpacity, Modal } from "react-native";
+import { View, Text, StyleSheet, Button, Alert, TouchableOpacity, Modal, FlatList } from "react-native";
 import { BarCodeScanner } from "expo-barcode-scanner";
-import QRCodeGenerator from "../components/QRCodeGenerator";
+import QRCode from 'react-native-qrcode-svg';
 import { auth, db } from "../services/firebase";
-import { doc, updateDoc, getDoc, arrayUnion } from "firebase/firestore";
+import { doc, updateDoc, getDoc, arrayUnion, collection, addDoc } from "firebase/firestore";
 import { signOut } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 
@@ -13,7 +13,9 @@ const UserHomeScreen = () => {
   const [points, setPoints] = useState(0);
   const [userId, setUserId] = useState<string | null>(null);
   const [scannerVisible, setScannerVisible] = useState(false);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
   const navigation = useNavigation<any>();
+  const [recentActivities, setRecentActivities] = useState<Array<{ id: string, description: string, points: number }>>([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -24,6 +26,7 @@ const UserHomeScreen = () => {
         const userDoc = await getDoc(userRef);
         if (userDoc.exists()) {
           setPoints(userDoc.data().points);
+          setRecentActivities(userDoc.data().recentActivities || []);
         }
       }
     };
@@ -53,11 +56,34 @@ const UserHomeScreen = () => {
             const currentPoints = userDoc.data().points || 0;
             const scannedCodes = userDoc.data().scannedCodes || [];
             if (!scannedCodes.includes(data)) {
-              await updateDoc(userRef, { 
-                points: currentPoints + qrCodeData.points,
-                scannedCodes: arrayUnion(data)
+              const newPoints = currentPoints + qrCodeData.points;
+              const transactionData = {
+                userId,
+                points: qrCodeData.points,
+                qrCodeId: data,
+                timestamp: new Date().toISOString()
+              };
+
+              // Add transaction to the transactions collection
+              await addDoc(collection(db, 'transactions'), transactionData);
+
+              // Update user document
+              await updateDoc(userRef, {
+                points: newPoints,
+                scannedCodes: arrayUnion(data),
+                recentActivities: arrayUnion({
+                  id: data,
+                  description: `Scanned QR code for ${qrCodeData.points} points`,
+                  points: qrCodeData.points
+                })
               });
-              setPoints(currentPoints + qrCodeData.points);
+
+              setPoints(newPoints);
+              setRecentActivities(prevActivities => [...prevActivities, {
+                id: data,
+                description: `Scanned QR code for ${qrCodeData.points} points`,
+                points: qrCodeData.points
+              }]);
               Alert.alert("Success", `You've received ${qrCodeData.points} points!`);
             } else {
               Alert.alert("Error", "This QR code has already been used.");
@@ -96,9 +122,27 @@ const UserHomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>Welcome, User!</Text>
-      <Text style={styles.points}>Your Points: {points}</Text>
-      <QRCodeGenerator />
+      <View style={styles.header}>
+        <Text style={styles.title}>Loyalty Balance</Text>
+        <Text style={styles.points}>{points.toFixed(2)}pts</Text>
+        <Text style={styles.subtitle}>1200 points till your next reward</Text>
+      </View>
+      <TouchableOpacity style={styles.inviteButton} onPress={() => setQrModalVisible(true)}>
+        <Text style={styles.inviteButtonText}>Share invite code</Text>
+      </TouchableOpacity>
+      <View style={styles.recentActivities}>
+        <Text style={styles.recentActivitiesTitle}>Recent Activity</Text>
+        <FlatList
+          data={recentActivities}
+          renderItem={({ item }) => (
+            <View style={styles.activityItem}>
+              <Text style={styles.activityDescription}>{item.description}</Text>
+              <Text style={styles.activityPoints}>+{item.points}</Text>
+            </View>
+          )}
+          keyExtractor={item => item.id}
+        />
+      </View>
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
         <Text style={styles.logoutButtonText}>Logout</Text>
       </TouchableOpacity>
@@ -122,6 +166,26 @@ const UserHomeScreen = () => {
           <Button title="Close Scanner" onPress={() => setScannerVisible(false)} />
         </View>
       </Modal>
+      <Modal
+        animationType="slide"
+        transparent={true}
+        visible={qrModalVisible}
+        onRequestClose={() => {
+          setQrModalVisible(false);
+        }}
+      >
+        <View style={styles.qrModalContainer}>
+          <View style={styles.qrModal}>
+            <Text style={styles.modalTitle}>QR Code</Text>
+            {userId && (
+              <QRCode value={userId} size={200} />
+            )}
+            <TouchableOpacity onPress={() => setQrModalVisible(false)} style={styles.closeButton}>
+              <Text style={styles.closeButtonText}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 };
@@ -129,46 +193,145 @@ const UserHomeScreen = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 20,
     backgroundColor: "#121212",
+    padding: 20,
+  },
+  header: {
+    backgroundColor: "#1F1B24",
+    padding: 20,
+    borderRadius: 10,
+    marginBottom: 20,
+    alignItems: "center",
   },
   title: {
-    fontSize: 24,
-    fontWeight: "bold",
-    marginBottom: 20,
+    fontSize: 22,
     color: "#fff",
+    fontWeight: "bold",
   },
   points: {
-    fontSize: 18,
+    fontSize: 36,
+    color: "#FFD700",
+    fontWeight: "bold",
+  },
+  subtitle: {
+    fontSize: 14,
+    color: "#888",
+  },
+  inviteButton: {
+    backgroundColor: "#6A0DAD",
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
     marginBottom: 20,
+  },
+  inviteButtonText: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+  },
+  recentActivities: {
+    flex: 1,
+  },
+  recentActivitiesTitle: {
+    fontSize: 18,
+    color: "#fff",
+    marginBottom: 10,
+  },
+  activityItem: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    backgroundColor: "#1F1B24",
+    padding: 15,
+    borderRadius: 10,
+    marginBottom: 10,
+  },
+  activityDescription: {
     color: "#fff",
   },
+  activityPoints: {
+    color: "#FFD700",
+  },
   logoutButton: {
-    marginTop: 20,
-    backgroundColor: '#FF6347',
-    padding: 10,
-    borderRadius: 8,
+    backgroundColor: '#FF4500',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
+    marginBottom: 20,
   },
   logoutButtonText: {
     color: '#fff',
+    fontWeight: 'bold',
     fontSize: 16,
   },
   scanButton: {
-    marginTop: 20,
     backgroundColor: '#1E90FF',
-    padding: 10,
-    borderRadius: 8,
+    padding: 15,
+    borderRadius: 10,
+    alignItems: "center",
   },
   scanButtonText: {
     color: '#fff',
+    fontWeight: 'bold',
     fontSize: 16,
   },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
+  },
+  qrModalContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+  },
+  qrModal: {
+    width: "80%",
+    backgroundColor: "#fff",
+    padding: 20,
+    borderRadius: 20,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    marginBottom: 15,
+  },
+  qrContainer: {
+    marginVertical: 20,
+    alignItems: "center",
+  },
+  printButton: {
+    backgroundColor: '#1e90ff',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  printButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  closeButton: {
+    backgroundColor: '#ff6347',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
