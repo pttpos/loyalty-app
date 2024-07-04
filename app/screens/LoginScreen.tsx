@@ -1,5 +1,6 @@
+// screens/LoginScreen.tsx
 import React, { useState } from 'react';
-import { View, TextInput, Button, Text, Alert, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, TextInput, Text, Alert, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
 import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../services/firebase';
@@ -49,10 +50,7 @@ const LoginScreen = () => {
         const user = userCredential.user;
         if (user.email) {
           await createUserProfile({ uid: user.uid, email: user.email, role: 'user' }); // Set default role to 'user'
-          navigation.reset({
-            index: 0,
-            routes: [{ name: 'UserHome' }],
-          });
+          navigation.navigate('OTPVerification', { email: user.email, uid: user.uid });
         } else {
           Alert.alert('Error', 'Email is missing');
         }
