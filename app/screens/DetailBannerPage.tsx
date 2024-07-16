@@ -61,12 +61,14 @@ const DetailBannerPage = () => {
         <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
           <MaterialCommunityIcons name="arrow-left" size={24} color="#fff" />
         </TouchableOpacity>
-        <Text style={styles.headerTitle}>Banner Details</Text>
+        <Text style={styles.headerTitle}>Back</Text>
       </View>
-      <TouchableOpacity onPress={toggleModal}>
+      <TouchableOpacity onPress={toggleModal} style={styles.imageContainer}>
         <Image source={{ uri: banner.imageUrl }} style={styles.bannerImage} />
       </TouchableOpacity>
       <View style={styles.content}>
+        <Text style={styles.title}>{banner.title}</Text>
+        <Text style={styles.postedDate}>Posted on: {new Date(banner.postedDate).toLocaleString()}</Text>
         <Text style={styles.description}>{banner.description}</Text>
         {banner.endTime && (
           <Text style={styles.endTime}>Ends on: {new Date(banner.endTime).toLocaleString()}</Text>
@@ -100,34 +102,58 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     backgroundColor: '#1E90FF',
     paddingHorizontal: 10,
-    paddingVertical: 20,
+    paddingVertical: 30,
   },
   backButton: {
-    top: 10,
+    top:15,
     marginRight: 10,
   },
   headerTitle: {
-    top: 10,
-    fontSize: 18,
+    top:15,
+    fontSize: 20,
     color: '#fff',
     fontWeight: 'bold',
+  },
+  imageContainer: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
+    margin: 20,
+    borderRadius: 10,
+    overflow: 'hidden',
   },
   bannerImage: {
     width: '100%',
     height: 250,
     resizeMode: 'cover',
-    marginBottom: 20,
   },
   content: {
     paddingHorizontal: 20,
   },
-  description: {
-    fontSize: 18,
+  title: {
+    fontSize: 22,
+    fontWeight: 'bold',
     marginBottom: 10,
+    textAlign: 'center',
+  },
+  postedDate: {
+    fontSize: 14,
+    color: '#888',
+    marginBottom: 10,
+    textAlign: 'center',
+  },
+  description: {
+    fontSize: 16,
+    lineHeight: 24,
+    marginBottom: 20,
+    textAlign: 'center',
   },
   endTime: {
     fontSize: 14,
     color: '#888',
+    textAlign: 'center',
   },
   loadingContainer: {
     flex: 1,

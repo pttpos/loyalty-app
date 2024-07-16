@@ -96,9 +96,8 @@ const HomePage = () => {
       <ScrollView style={styles.contentContainer}>
         <View style={styles.bannerContainer}>
           {banners.map(banner => (
-            <TouchableOpacity key={banner.id} onPress={() => handleBannerPress(banner.id)}>
+            <TouchableOpacity key={banner.id} onPress={() => handleBannerPress(banner.id)} style={styles.bannerWrapper}>
               <Image source={{ uri: banner.imageUrl }} style={styles.banner} />
-              <Text style={styles.bannerDescription}>{banner.description}</Text>
             </TouchableOpacity>
           ))}
         </View>
@@ -189,10 +188,20 @@ const styles = StyleSheet.create({
   bannerContainer: {
     padding: 10,
   },
+  bannerWrapper: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 2,
+    elevation: 5,
+    borderRadius: 10,
+    overflow: 'hidden',
+    marginBottom: 20,
+  },
   banner: {
     width: '100%',
-    height: 150,
-    marginBottom: 10,
+    height: 250,
+    borderRadius: 10,
   },
   bannerDescription: {
     fontSize: 16,

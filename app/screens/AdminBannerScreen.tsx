@@ -7,6 +7,7 @@ import { getAuth } from 'firebase/auth';
 import { db, storage } from '../services/firebase';
 import { ref, uploadBytes, getDownloadURL, deleteObject } from 'firebase/storage';
 import { doc, setDoc, collection, getDocs, deleteDoc } from 'firebase/firestore';
+import { LogBox } from 'react-native';
 
 interface Banner {
   id: string;
@@ -39,7 +40,7 @@ const AdminBannerScreen = () => {
   const pickImage = async () => {
     let result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
-      allowsEditing: true,
+      allowsEditing: false,  // Change this to false to avoid cropping
       aspect: [4, 3],
       quality: 1,
     });
@@ -106,8 +107,11 @@ const AdminBannerScreen = () => {
       // Delete banner from Firestore
       await deleteDoc(doc(db, 'banners', bannerToDelete.id));
       
+      // Extract the path from the image URL
+      const path = bannerToDelete.imageUrl.split('/o/')[1].split('?')[0];
+      const imageRef = ref(storage, decodeURIComponent(path));
+
       // Delete image from Firebase Storage
-      const imageRef = ref(storage, bannerToDelete.imageUrl);
       await deleteObject(imageRef);
 
       setBanners(banners.filter(banner => banner.id !== bannerToDelete.id));
@@ -366,5 +370,9 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+// Ignore specific log notifications
+LogBox.ignoreLogs([
+  'Warning: Unknown: Support for defaultProps will be removed from memo components in a future major release.'
+]);
 
 export default AdminBannerScreen;
