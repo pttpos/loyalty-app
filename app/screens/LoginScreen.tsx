@@ -1,7 +1,6 @@
-// screens/LoginScreen.tsx
 import React, { useState } from 'react';
 import { View, TextInput, Text, Alert, TouchableOpacity, StyleSheet, ActivityIndicator } from 'react-native';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../services/firebase';
 import { createUserProfile, getUserProfile } from '../services/userService';
@@ -30,15 +29,21 @@ const LoginScreen = () => {
         if (user) {
           const userProfile = await getUserProfile(user.uid);
           if (userProfile) {
+            if (!user.emailVerified) {
+              await sendEmailVerification(user); // Resend email verification
+              navigation.navigate('EmailVerification', { email: user.email, uid: user.uid });
+              return;
+            }
+
             if (userProfile.role === 'admin') {
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'AdminHome' }],
+                routes: [{ name: 'Admin' }],
               });
             } else {
               navigation.reset({
                 index: 0,
-                routes: [{ name: 'UserHome' }],
+                routes: [{ name: 'HomePage' }],
               });
             }
           } else {
@@ -49,8 +54,9 @@ const LoginScreen = () => {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         if (user.email) {
-          await createUserProfile({ uid: user.uid, email: user.email, role: 'user' }); // Set default role to 'user'
-          navigation.navigate('OTPVerification', { email: user.email, uid: user.uid });
+          await createUserProfile({ uid: user.uid, email: user.email, role: 'user' });
+          await sendEmailVerification(user);
+          navigation.navigate('EmailVerification', { email: user.email, uid: user.uid });
         } else {
           Alert.alert('Error', 'Email is missing');
         }
@@ -112,8 +118,8 @@ const LoginScreen = () => {
 };
 
 LogBox.ignoreLogs([
-  'BarCodeScanner has been deprecated', // Ignore the specific deprecation warning for BarCodeScanner
-  '@firebase/auth', // Ignore the Firebase Auth warning
+  'BarCodeScanner has been deprecated',
+  '@firebase/auth',
 ]);
 
 const styles = StyleSheet.create({

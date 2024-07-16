@@ -15,6 +15,9 @@ declare module 'expo-camera' {
     }
   
     export class Camera extends React.Component<CameraProps> {
+      static requestCameraPermissionsAsync(): { status: any; } | PromiseLike<{ status: any; }> {
+        throw new Error("Method not implemented.");
+      }
       static requestPermissionsAsync(): { status: any; } | PromiseLike<{ status: any; }> {
         throw new Error("Method not implemented.");
       }

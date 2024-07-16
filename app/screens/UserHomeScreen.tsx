@@ -6,6 +6,7 @@ import { auth, db } from "../services/firebase";
 import { doc, updateDoc, getDoc, arrayUnion, collection, addDoc } from "firebase/firestore";
 import { signOut } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
+import { MaterialCommunityIcons } from '@expo/vector-icons';  // Using Expo's vector icons
 
 const UserHomeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -186,6 +187,24 @@ const UserHomeScreen = () => {
           </View>
         </View>
       </Modal>
+      <View style={styles.menuContainer}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('HomePage')}>
+          <MaterialCommunityIcons name="home" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}>
+          <MaterialCommunityIcons name="credit-card" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>Card</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserHomeScreen')}>
+          <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>QR</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}>
+          <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>Redeem</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -332,6 +351,24 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  menuContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingVertical: 10,
+    backgroundColor: '#ff0000',
+    position: 'absolute',
+    bottom: 0,
+    width: '100%',
+    height: 75, // Adjust the height of the footer
+    alignItems: 'center',
+  },
+  menuItem: {
+    alignItems: 'center',
+  },
+  menuText: {
+    color: '#ffffff',
+    fontSize: 16,
   },
 });
 

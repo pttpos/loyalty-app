@@ -4,6 +4,8 @@ import QRCode from 'react-native-qrcode-svg';
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { db, auth } from "../services/firebase";
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { useNavigation } from '@react-navigation/native';
+import { Ionicons } from '@expo/vector-icons';
 
 const AdminHomeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -13,7 +15,8 @@ const AdminHomeScreen = () => {
   const [userPoints, setUserPoints] = useState<number | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
   const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
-
+  const navigation = useNavigation<any>();
+  
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -138,7 +141,12 @@ const AdminHomeScreen = () => {
   return (
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
-        <Text style={styles.title}>Welcome, Admin!</Text>
+        <View style={styles.header}>
+          {/* <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
+            <Ionicons name="menu" size={24} color="black" />
+          </TouchableOpacity> */}
+          <Text style={styles.title}>Welcome, Admin!</Text>
+        </View>
 
         {scanned && userPoints !== null ? (
           <View style={styles.resultContainer}>
@@ -236,12 +244,16 @@ const styles = StyleSheet.create({
     padding: 20,
     backgroundColor: "#f4f4f4",
   },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
   title: {
     fontSize: 28,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginLeft: 10,
     color: "#333",
-    textAlign: 'center',
   },
   scannerContainer: {
     flex: 1,
