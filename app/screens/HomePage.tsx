@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
 import { getUserProfile } from '../services/userService';
@@ -12,6 +12,7 @@ const HomePage = () => {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [banners, setBanners] = useState<any[]>([]);
   const [greeting, setGreeting] = useState<string>('');
+  const [loading, setLoading] = useState<boolean>(true); // State for loading indicator
   const auth = getAuth();
   const user = auth.currentUser;
 
@@ -34,6 +35,8 @@ const HomePage = () => {
         setBanners(bannersList);
       } catch (error) {
         console.error('Error fetching banners:', error);
+      } finally {
+        setLoading(false); // Stop loading once data is fetched
       }
     };
 
@@ -95,11 +98,15 @@ const HomePage = () => {
 
       <ScrollView style={styles.contentContainer}>
         <View style={styles.bannerContainer}>
-          {banners.map(banner => (
-            <TouchableOpacity key={banner.id} onPress={() => handleBannerPress(banner.id)} style={styles.bannerWrapper}>
-              <Image source={{ uri: banner.imageUrl }} style={styles.banner} />
-            </TouchableOpacity>
-          ))}
+          {loading ? ( // Show loading indicator if data is still being fetched
+            <ActivityIndicator size="large" color="#1E90FF" />
+          ) : (
+            banners.map(banner => (
+              <TouchableOpacity key={banner.id} onPress={() => handleBannerPress(banner.id)} style={styles.bannerWrapper}>
+                <Image source={{ uri: banner.imageUrl }} style={styles.banner} />
+              </TouchableOpacity>
+            ))
+          )}
         </View>
       </ScrollView>
 

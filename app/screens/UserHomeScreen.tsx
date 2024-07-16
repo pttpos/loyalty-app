@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { View, Text, StyleSheet, Button, Alert, TouchableOpacity, Modal, FlatList } from "react-native";
+import { View, Text, StyleSheet, TouchableOpacity, Modal, FlatList, Alert, Button } from "react-native";
 import { BarCodeScanner } from "expo-barcode-scanner";
 import QRCode from 'react-native-qrcode-svg';
 import { auth, db } from "../services/firebase";
@@ -129,8 +129,10 @@ const UserHomeScreen = () => {
         <Text style={styles.subtitle}>1200 points till your next reward</Text>
       </View>
       <TouchableOpacity style={styles.inviteButton} onPress={() => setQrModalVisible(true)}>
-        <Text style={styles.inviteButtonText}>Share invite code</Text>
+        <MaterialCommunityIcons name="qrcode" size={30} color="#fff" style={styles.inviteIcon} />
+        <Text style={styles.inviteButtonText}>My QR-Code</Text>
       </TouchableOpacity>
+
       <View style={styles.recentActivities}>
         <Text style={styles.recentActivitiesTitle}>Recent Activity</Text>
         <FlatList
@@ -144,12 +146,29 @@ const UserHomeScreen = () => {
           keyExtractor={item => item.id}
         />
       </View>
-      <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
-        <Text style={styles.logoutButtonText}>Logout</Text>
-      </TouchableOpacity>
       <TouchableOpacity style={styles.scanButton} onPress={() => setScannerVisible(true)}>
+        <MaterialCommunityIcons name="qrcode-scan" size={24} color="#fff" style={styles.scanIcon} />
         <Text style={styles.scanButtonText}>Scan QR Code</Text>
       </TouchableOpacity>
+
+      <View style={styles.menuContainer}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('HomePage')}>
+          <MaterialCommunityIcons name="home" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}>
+          <MaterialCommunityIcons name="credit-card" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>Card</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserHomeScreen')}>
+          <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>QR</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}>
+          <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>Redeem</Text>
+        </TouchableOpacity>
+      </View>
       <Modal
         animationType="slide"
         transparent={false}
@@ -187,24 +206,6 @@ const UserHomeScreen = () => {
           </View>
         </View>
       </Modal>
-      <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('HomePage')}>
-          <MaterialCommunityIcons name="home" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <MaterialCommunityIcons name="credit-card" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Card</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserHomeScreen')}>
-          <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>QR</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Redeem</Text>
-        </TouchableOpacity>
-      </View>
     </View>
   );
 };
@@ -214,6 +215,24 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#121212",
     padding: 20,
+    justifyContent: 'space-between', // Ensures the footer stays at the bottom
+  },
+  scanButton: {
+    backgroundColor: '#1E90FF',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    flexDirection: 'row', // Added to arrange items in a row
+    marginBottom: 20,
+  },
+  scanIcon: {
+    marginRight: 10, // Spacing between icon and text
+  },
+  scanButtonText: {
+    color: '#fff',
+    fontWeight: 'bold',
+    fontSize: 16,
   },
   header: {
     backgroundColor: "#1F1B24",
@@ -248,6 +267,9 @@ const styles = StyleSheet.create({
     fontWeight: "bold",
     fontSize: 16,
   },
+  inviteIcon: {
+    marginRight: 10, // Spacing between icon and text
+  },
   recentActivities: {
     flex: 1,
   },
@@ -278,17 +300,6 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   logoutButtonText: {
-    color: '#fff',
-    fontWeight: 'bold',
-    fontSize: 16,
-  },
-  scanButton: {
-    backgroundColor: '#1E90FF',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: "center",
-  },
-  scanButtonText: {
     color: '#fff',
     fontWeight: 'bold',
     fontSize: 16,
@@ -357,10 +368,8 @@ const styles = StyleSheet.create({
     justifyContent: 'space-around',
     paddingVertical: 10,
     backgroundColor: '#ff0000',
-    position: 'absolute',
-    bottom: 0,
     width: '100%',
-    height: 75, // Adjust the height of the footer
+    height: 75,
     alignItems: 'center',
   },
   menuItem: {
@@ -370,6 +379,8 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
   },
+
 });
+
 
 export default UserHomeScreen;
