@@ -127,11 +127,15 @@ const UserHomeScreen = () => {
         <Text style={styles.title}>Loyalty Balance</Text>
         <Text style={styles.points}>{points.toFixed(2)}pts</Text>
         <Text style={styles.subtitle}>1200 points till your next reward</Text>
-      </View>
-      <TouchableOpacity style={styles.inviteButton} onPress={() => setQrModalVisible(true)}>
-        <MaterialCommunityIcons name="qrcode" size={30} color="#fff" style={styles.inviteIcon} />
-        <Text style={styles.inviteButtonText}>My QR-Code</Text>
+        <TouchableOpacity style={styles.inviteButton} onPress={() => setQrModalVisible(true)}>
+          <MaterialCommunityIcons name="qrcode" size={30} color="#fff" style={styles.inviteIcon} />
+          <Text style={styles.inviteButtonText}>My QR-Code</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.scanButton} onPress={() => setScannerVisible(true)}>
+        <MaterialCommunityIcons name="qrcode-scan" size={24} color="#fff" style={styles.scanIcon} />
+        <Text style={styles.scanButtonText}>Scan QR Code</Text>
       </TouchableOpacity>
+      </View>
 
       <View style={styles.recentActivities}>
         <Text style={styles.recentActivitiesTitle}>Recent Activity</Text>
@@ -146,29 +150,8 @@ const UserHomeScreen = () => {
           keyExtractor={item => item.id}
         />
       </View>
-      <TouchableOpacity style={styles.scanButton} onPress={() => setScannerVisible(true)}>
-        <MaterialCommunityIcons name="qrcode-scan" size={24} color="#fff" style={styles.scanIcon} />
-        <Text style={styles.scanButtonText}>Scan QR Code</Text>
-      </TouchableOpacity>
 
-      <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('HomePage')}>
-          <MaterialCommunityIcons name="home" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <MaterialCommunityIcons name="credit-card" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Card</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserHomeScreen')}>
-          <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>QR</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Redeem</Text>
-        </TouchableOpacity>
-      </View>
+
       <Modal
         animationType="slide"
         transparent={false}
@@ -206,6 +189,24 @@ const UserHomeScreen = () => {
           </View>
         </View>
       </Modal>
+      <View style={styles.menuContainer}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('HomePage')}>
+          <MaterialCommunityIcons name="home" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>Home</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}>
+          <MaterialCommunityIcons name="credit-card" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>Card</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserHomeScreen')}>
+          <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>QR</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={styles.menuItem}>
+          <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
+          <Text style={styles.menuText}>Redeem</Text>
+        </TouchableOpacity>
+      </View>
     </View>
   );
 };
@@ -214,8 +215,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#121212",
-    padding: 20,
-    justifyContent: 'space-between', // Ensures the footer stays at the bottom
   },
   scanButton: {
     backgroundColor: '#1E90FF',
@@ -223,11 +222,11 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    flexDirection: 'row', // Added to arrange items in a row
-    marginBottom: 20,
+    flexDirection: 'row',
+    margin: 20,
   },
   scanIcon: {
-    marginRight: 10, // Spacing between icon and text
+    marginRight: 10,
   },
   scanButtonText: {
     color: '#fff',
@@ -235,11 +234,14 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
   header: {
+    marginTop: 50,
     backgroundColor: "#1F1B24",
     padding: 20,
     borderRadius: 10,
     marginBottom: 20,
-    alignItems: "center",
+    width: "90%",
+    alignSelf: 'center',
+    alignItems: 'center',
   },
   title: {
     fontSize: 22,
@@ -254,24 +256,29 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: "#888",
+    marginBottom: 10,
   },
   inviteButton: {
     backgroundColor: "#6A0DAD",
-    padding: 15,
+    padding: 10,
     borderRadius: 10,
     alignItems: "center",
-    marginBottom: 20,
+    marginTop: 20,
+    flexDirection: 'row',
   },
   inviteButtonText: {
     color: "#fff",
     fontWeight: "bold",
     fontSize: 16,
+    marginLeft: 10,
   },
   inviteIcon: {
-    marginRight: 10, // Spacing between icon and text
+    marginRight: 10,
   },
   recentActivities: {
     flex: 1,
+    width: "90%",
+    alignSelf: 'center',
   },
   recentActivitiesTitle: {
     fontSize: 18,
@@ -353,6 +360,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   closeButton: {
+    top:10,
     backgroundColor: '#ff6347',
     padding: 10,
     borderRadius: 10,
@@ -367,7 +375,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-around',
     paddingVertical: 10,
-    backgroundColor: '#ff0000',
+    backgroundColor: '#1E90FF',
+    position: 'absolute',
+    bottom: 0,
     width: '100%',
     height: 75,
     alignItems: 'center',
@@ -379,8 +389,9 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
   },
-
 });
+
+
 
 
 export default UserHomeScreen;
