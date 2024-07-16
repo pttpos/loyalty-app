@@ -5,18 +5,39 @@ import { useNavigation } from '@react-navigation/native';
 import { auth } from '../services/firebase';
 import { createUserProfile, getUserProfile } from '../services/userService';
 import { LogBox } from 'react-native';
+import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import moment from 'moment';
 
 const LoginScreen = () => {
   const [email, setEmail] = useState<string>('');
   const [password, setPassword] = useState<string>('');
   const [username, setUsername] = useState<string>('');
+  const [surname, setSurname] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
+  const [birthday, setBirthday] = useState<string>('');
   const [isLogin, setIsLogin] = useState<boolean>(true);
   const [loading, setLoading] = useState<boolean>(false);
+  const [isDatePickerVisible, setDatePickerVisibility] = useState(false);
   const navigation = useNavigation<any>();
 
+  const handleConfirm = (date: Date) => {
+    setBirthday(moment(date).format('YYYY-MM-DD'));
+    setDatePickerVisibility(false);
+  };
+
+  const validatePhoneNumber = (phone: string) => {
+    const phoneRegex = /^(0[1-9])[0-9]{7,8}$/;
+    return phoneRegex.test(phone);
+  };
+
   const handleAuth = async () => {
-    if (!email || !password || (!isLogin && !username)) {
+    if (!email || !password || (!isLogin && (!username || !surname || !phone || !birthday))) {
       Alert.alert('Error', 'Please fill out all fields');
+      return;
+    }
+
+    if (!isLogin && !validatePhoneNumber(phone)) {
+      Alert.alert('Error', 'Please enter a valid Cambodian phone number');
       return;
     }
 
@@ -54,7 +75,15 @@ const LoginScreen = () => {
         const userCredential = await createUserWithEmailAndPassword(auth, email, password);
         const user = userCredential.user;
         if (user.email) {
-          await createUserProfile({ uid: user.uid, email: user.email, role: 'user' });
+          await createUserProfile({ 
+            uid: user.uid, 
+            email: user.email, 
+            role: 'user', 
+            username, 
+            surname, 
+            phone, 
+            birthday 
+          });
           await sendEmailVerification(user);
           navigation.navigate('EmailVerification', { email: user.email, uid: user.uid });
         } else {
@@ -76,14 +105,42 @@ const LoginScreen = () => {
     <View style={styles.container}>
       <Text style={styles.title}>{isLogin ? 'Login' : 'Create an account'}</Text>
       {!isLogin && (
-        <TextInput
-          style={styles.input}
-          placeholder="Username"
-          value={username}
-          onChangeText={setUsername}
-          autoCapitalize="none"
-          autoCorrect={false}
-        />
+        <>
+          <TextInput
+            style={styles.input}
+            placeholder="Name"
+            value={username}
+            onChangeText={setUsername}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Surname"
+            value={surname}
+            onChangeText={setSurname}
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Phone"
+            value={phone}
+            onChangeText={setPhone}
+            keyboardType="phone-pad"
+            autoCapitalize="none"
+            autoCorrect={false}
+          />
+          <TouchableOpacity onPress={() => setDatePickerVisibility(true)} style={styles.datePickerButton}>
+            <Text style={styles.datePickerButtonText}>{birthday ? birthday : 'Select Birthday'}</Text>
+          </TouchableOpacity>
+          <DateTimePickerModal
+            isVisible={isDatePickerVisible}
+            mode="date"
+            onConfirm={handleConfirm}
+            onCancel={() => setDatePickerVisibility(false)}
+          />
+        </>
       )}
       <TextInput
         style={styles.input}
@@ -143,6 +200,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     marginBottom: 20,
     backgroundColor: '#333',
+    color: '#fff',
+  },
+  datePickerButton: {
+    height: 50,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderColor: '#444',
+    borderWidth: 1,
+    borderRadius: 8,
+    backgroundColor: '#333',
+    marginBottom: 20,
+  },
+  datePickerButtonText: {
     color: '#fff',
   },
   button: {

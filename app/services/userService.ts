@@ -8,9 +8,13 @@ export interface UserProfile {
   emailVerified: boolean;
   createdAt: Date;
   points: number;
+  username: string;
+  surname: string;
+  phone: string;
+  birthday: string;
 }
 
-export const createUserProfile = async (user: { uid: string, email: string, role: string }): Promise<void> => {
+export const createUserProfile = async (user: { uid: string, email: string, role: string, username: string, surname: string, phone: string, birthday: string }): Promise<void> => {
   try {
     await setDoc(doc(db, 'users', user.uid), {
       email: user.email,
@@ -18,6 +22,10 @@ export const createUserProfile = async (user: { uid: string, email: string, role
       emailVerified: false,
       createdAt: new Date(),
       points: 0,
+      username: user.username,
+      surname: user.surname,
+      phone: user.phone,
+      birthday: user.birthday,
     });
   } catch (error) {
     console.error("Error creating user profile: ", error);
