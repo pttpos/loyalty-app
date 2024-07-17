@@ -1,22 +1,24 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
-import { View, Text, StyleSheet, TextInput, Alert, Keyboard, TouchableWithoutFeedback, Animated, TouchableOpacity, Modal } from "react-native";
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { View, Text, StyleSheet, TextInput, Alert, Keyboard, TouchableWithoutFeedback, Animated, TouchableOpacity, Modal, Button } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { BarCodeScanner } from "expo-barcode-scanner";
-import { db, auth } from "../services/firebase";
-import { doc, updateDoc, getDoc, collection, query, where, getDocs, addDoc } from "firebase/firestore";
+import { BarCodeScanner } from 'expo-barcode-scanner';
+import { db, auth } from '../services/firebase';
+import { doc, updateDoc, getDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
-import { Ionicons } from '@expo/vector-icons';
+import UserCard from '../components/UserCard'; // Ensure the import path is correct
+import { UserProfile } from '../services/userService'; // Ensure the import path is correct
 
 const AdminHomeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
-  const [email, setEmail] = useState("");
-  const [points, setPoints] = useState("");
+  const [email, setEmail] = useState('');
+  const [points, setPoints] = useState('');
   const [userPoints, setUserPoints] = useState<number | null>(null);
+  const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null); // Store the selected user
   const [modalVisible, setModalVisible] = useState(false);
   const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
   const navigation = useNavigation<any>();
-  
+
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -47,12 +49,25 @@ const AdminHomeScreen = () => {
 
       if (userDoc.exists()) {
         const userData = userDoc.data();
+        const userProfile: UserProfile = {
+          uid: uid,
+          email: userData.email,
+          role: userData.role,
+          emailVerified: userData.emailVerified,
+          createdAt: userData.createdAt,
+          points: userData.points || 0,
+          username: userData.username,
+          surname: userData.surname,
+          phone: userData.phone,
+          birthday: userData.birthday,
+        };
         setEmail(userData.email);
         setUserPoints(userData.points || 0);
+        setSelectedUser(userProfile); // Store the user data in the state
         console.log(`Retrieved user data: ${JSON.stringify(userData)}`);
       } else {
-        Alert.alert("User not found.");
-        console.log("User not found.");
+        Alert.alert('User not found.');
+        console.log('User not found.');
       }
     } catch (error) {
       Alert.alert('Error retrieving user:', (error as Error).message);
@@ -71,9 +86,9 @@ const AdminHomeScreen = () => {
           points: currentPoints + parseInt(points, 10),
         });
         setUserPoints(currentPoints + parseInt(points, 10));
-        Alert.alert("Points added successfully!");
+        Alert.alert('Points added successfully!');
       } else {
-        Alert.alert("User not found.");
+        Alert.alert('User not found.');
       }
     } catch (error) {
       Alert.alert('Error updating points:', (error as Error).message);
@@ -82,7 +97,7 @@ const AdminHomeScreen = () => {
 
   const handleAddPointsByEmail = useCallback(async () => {
     if (!email || !points) {
-      Alert.alert("Please enter a valid email and points.");
+      Alert.alert('Please enter a valid email and points.');
       return;
     }
 
@@ -94,12 +109,13 @@ const AdminHomeScreen = () => {
         const userDoc = userQuerySnapshot.docs[0];
         await addPoints(userDoc.id);
         // Clear all fields after adding points
-        setEmail("");
-        setPoints("");
+        setEmail('');
+        setPoints('');
         setScanned(false);
         setUserPoints(null);
+        setSelectedUser(null);
       } else {
-        Alert.alert("User not found.");
+        Alert.alert('User not found.');
       }
     } catch (error) {
       Alert.alert('Error updating points:', (error as Error).message);
@@ -108,12 +124,12 @@ const AdminHomeScreen = () => {
 
   const handleGenerateQRCode = async () => {
     if (!points) {
-      Alert.alert("Please enter points");
+      Alert.alert('Please enter points');
       return;
     }
 
     try {
-      const qrCodeRef = await addDoc(collection(db, "qrcodes"), {
+      const qrCodeRef = await addDoc(collection(db, 'qrcodes'), {
         points: parseInt(points, 10),
         used: false,
         createdAt: new Date(),
@@ -122,7 +138,7 @@ const AdminHomeScreen = () => {
       setQrCodeValue(qrCodeRef.id);
       setModalVisible(true);
     } catch (error) {
-      Alert.alert("Error generating QR code:", (error as Error).message);
+      Alert.alert('Error generating QR code:', (error as Error).message);
     }
   };
 
@@ -142,20 +158,13 @@ const AdminHomeScreen = () => {
     <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
       <View style={styles.container}>
         <View style={styles.header}>
-          {/* <TouchableOpacity onPress={() => navigation.toggleDrawer()}>
-            <Ionicons name="menu" size={24} color="black" />
-          </TouchableOpacity> */}
           <Text style={styles.title}>Welcome, Admin!</Text>
         </View>
 
         {scanned && userPoints !== null ? (
           <View style={styles.resultContainer}>
-            <Text style={styles.resultText}>User Email: {email}</Text>
-            <Text style={styles.resultText}>Current Points: {userPoints}</Text>
-            <TouchableOpacity style={styles.button} onPress={() => addPoints(email)}>
-              <Text style={styles.buttonText}>Add More Points</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.button} onPress={() => { setScanned(false); setUserPoints(null); Animated.timing(scaleAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start(); }}>
+            {selectedUser && <UserCard user={selectedUser} />}
+            <TouchableOpacity style={styles.button} onPress={() => { setScanned(false); setUserPoints(null); setSelectedUser(null); Animated.timing(scaleAnim, { toValue: 1, duration: 500, useNativeDriver: true }).start(); }}>
               <Text style={styles.buttonText}>Scan Again</Text>
             </TouchableOpacity>
           </View>
@@ -180,20 +189,20 @@ const AdminHomeScreen = () => {
         <View style={styles.inputContainer}>
           <TextInput
             style={styles.input}
-            placeholder="User Email"
+            placeholder='User Email'
             value={email}
             onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-            placeholderTextColor="#888"
+            keyboardType='email-address'
+            autoCapitalize='none'
+            placeholderTextColor='#888'
           />
           <TextInput
             style={styles.input}
-            placeholder="Points"
+            placeholder='Points'
             value={points}
             onChangeText={setPoints}
-            keyboardType="numeric"
-            placeholderTextColor="#888"
+            keyboardType='numeric'
+            placeholderTextColor='#888'
           />
           <TouchableOpacity style={styles.button} onPress={handleAddPointsByEmail}>
             <Text style={styles.buttonText}>Add Points by Email</Text>
@@ -204,7 +213,7 @@ const AdminHomeScreen = () => {
         </View>
 
         <Modal
-          animationType="slide"
+          animationType='slide'
           transparent={true}
           visible={modalVisible}
           onRequestClose={() => {
@@ -242,7 +251,7 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     padding: 20,
-    backgroundColor: "#f4f4f4",
+    backgroundColor: '#f4f4f4',
   },
   header: {
     flexDirection: 'row',
@@ -253,7 +262,7 @@ const styles = StyleSheet.create({
     fontSize: 28,
     fontWeight: 'bold',
     marginLeft: 10,
-    color: "#333",
+    color: '#333',
   },
   scannerContainer: {
     flex: 1,
@@ -264,11 +273,6 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  resultText: {
-    fontSize: 18,
-    marginBottom: 10,
-    color: "#333",
   },
   inputContainer: {
     flex: 1,
@@ -314,6 +318,7 @@ const styles = StyleSheet.create({
     backgroundColor: overlayColor,
   },
   button: {
+    top:20,
     backgroundColor: '#1e90ff',
     padding: 15,
     borderRadius: 10,
@@ -353,7 +358,7 @@ const styles = StyleSheet.create({
   },
   qrContainer: {
     marginVertical: 20,
-    alignItems: "center",
+    alignItems: 'center',
   },
   buttonClose: {
     backgroundColor: '#ff6347',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { View, Text, Alert, TouchableOpacity, StyleSheet, FlatList, Modal, Button, Image, Animated } from 'react-native';
 import { BarCodeScanner } from "expo-barcode-scanner";
 import QRCode from 'react-native-qrcode-svg';
@@ -19,9 +19,13 @@ const UserHomeScreen = () => {
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const navigation = useNavigation<any>();
   const [recentActivities, setRecentActivities] = useState<Array<{ id: string, description: string, points: number }>>([]);
+  const isDataFetched = useRef(false); // Ref to keep track if data is fetched
 
   useEffect(() => {
     const fetchUserData = async () => {
+      if (isDataFetched.current) {
+        return; // If data is already fetched, return
+      }
       const user = auth.currentUser;
       if (user) {
         setUserId(user.uid);
@@ -34,6 +38,7 @@ const UserHomeScreen = () => {
           setUserName(userData.username); // Assuming the name field is stored as 'name'
           setSureName(userData.surname);
           setPhone(userData.phone);   // Assuming the phone field is stored as 'phone'
+          isDataFetched.current = true; // Mark data as fetched
         }
       }
     };
@@ -235,7 +240,7 @@ const UserHomeScreen = () => {
           <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
           <Text style={styles.menuText}>QR</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('userofscan')}>
           <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
           <Text style={styles.menuText}>Redeem</Text>
         </TouchableOpacity>
@@ -421,7 +426,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
-
-
 
 export default UserHomeScreen;
