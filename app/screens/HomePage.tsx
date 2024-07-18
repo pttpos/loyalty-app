@@ -6,13 +6,15 @@ import { getUserProfile } from '../services/userService';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import HorizontalScrollBanner from '../components/HorizontalScrollBanner';
 
 const HomePage = () => {
   const navigation = useNavigation<any>();
   const [userProfile, setUserProfile] = useState<any>(null);
   const [banners, setBanners] = useState<any[]>([]);
+  const [horizontalBanners, setHorizontalBanners] = useState<any[]>([]);
   const [greeting, setGreeting] = useState<string>('');
-  const [loading, setLoading] = useState<boolean>(true); // State for loading indicator
+  const [loading, setLoading] = useState<boolean>(true);
   const auth = getAuth();
   const user = auth.currentUser;
 
@@ -36,21 +38,36 @@ const HomePage = () => {
       } catch (error) {
         console.error('Error fetching banners:', error);
       } finally {
-        setLoading(false); // Stop loading once data is fetched
+        setLoading(false);
+      }
+    };
+
+    const fetchHorizontalBanners = async () => {
+      try {
+        const horizontalBannersSnapshot = await getDocs(collection(db, 'banner_horizontal'));
+        const horizontalBannersList = horizontalBannersSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        setHorizontalBanners(horizontalBannersList);
+      } catch (error) {
+        console.error('Error fetching horizontal banners:', error);
       }
     };
 
     fetchBanners();
+    fetchHorizontalBanners();
   }, []);
 
   const handleBannerPress = (bannerId: string) => {
     navigation.navigate('DetailBannerPage', { bannerId });
   };
 
+  const handleHorizontalBannerPress = (bannerId: string) => {
+    navigation.navigate('DetailHorizontalBannerPage', { bannerId });
+  };
+
   const updateTimeAndGreeting = () => {
     const now = new Date();
     const hours = now.getUTCHours() + 7; // Cambodia is UTC+7
-    const adjustedHours = hours % 24; // Adjust for overflow
+    const adjustedHours = hours % 24;
 
     const minutes = now.getMinutes().toString().padStart(2, '0');
     const timeString = `${adjustedHours}:${minutes}`;
@@ -70,7 +87,7 @@ const HomePage = () => {
 
   useEffect(() => {
     updateTimeAndGreeting();
-    const interval = setInterval(updateTimeAndGreeting, 60000); // Update every minute
+    const interval = setInterval(updateTimeAndGreeting, 60000);
 
     return () => clearInterval(interval);
   }, []);
@@ -97,8 +114,9 @@ const HomePage = () => {
       </View>
 
       <ScrollView style={styles.contentContainer}>
+        <HorizontalScrollBanner banners={horizontalBanners} onBannerPress={handleHorizontalBannerPress} />
         <View style={styles.bannerContainer}>
-          {loading ? ( // Show loading indicator if data is still being fetched
+          {loading ? (
             <ActivityIndicator size="large" color="#1E90FF" />
           ) : (
             banners.map(banner => (
@@ -150,12 +168,12 @@ const styles = StyleSheet.create({
     top: 0,
   },
   headerLeft: {
-    top:20,
+    top: 20,
     flexDirection: 'row',
     alignItems: 'center',
   },
   headerRight: {
-    top:20,
+    top: 20,
     flexDirection: 'row',
     alignItems: 'center',
   },

@@ -58,3 +58,22 @@ export const updateUserPoints = async (uid: string, points: number): Promise<voi
     console.error("Error updating user points: ", error);
   }
 };
+
+export const setProductPrice = async (productId: string, price: number): Promise<void> => {
+  try {
+    await setDoc(doc(db, 'prices', productId), { price });
+    console.log('Product price updated in Firestore');
+  } catch (error) {
+    console.error("Error updating product price: ", error);
+  }
+};
+
+export const getProductPrice = async (productId: string): Promise<number | null> => {
+  try {
+    const priceDoc = await getDoc(doc(db, 'prices', productId));
+    return priceDoc.exists() ? priceDoc.data().price : null;
+  } catch (error) {
+    console.error("Error fetching product price: ", error);
+    return null;
+  }
+};

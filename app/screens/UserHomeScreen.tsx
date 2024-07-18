@@ -6,6 +6,7 @@ import { auth, db } from "../services/firebase";
 import { doc, updateDoc, getDoc, arrayUnion, collection, addDoc } from "firebase/firestore";
 import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';  // Using Expo's vector icons
+import { LogBox } from 'react-native';
 
 const UserHomeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
@@ -183,7 +184,7 @@ const UserHomeScreen = () => {
           renderItem={({ item }) => (
             <View style={styles.activityItem}>
               <Text style={styles.activityDescription}>{item.description}</Text>
-              <Text style={styles.activityPoints}>+{item.points}</Text>
+              <Text style={styles.activityPoints}>{item.points}</Text>
             </View>
           )}
           keyExtractor={item => item.id}
@@ -248,7 +249,10 @@ const UserHomeScreen = () => {
     </View>
   );
 };
-
+LogBox.ignoreLogs([
+  'BarCodeScanner has been deprecated',
+  '@firebase/auth',
+]);
 const styles = StyleSheet.create({
   container: {
     flex: 1,

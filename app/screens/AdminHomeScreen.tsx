@@ -67,13 +67,23 @@ const AdminHomeScreen = () => {
         console.log(`Retrieved user data: ${JSON.stringify(userData)}`);
       } else {
         Alert.alert('User not found.');
+        clearState();
         console.log('User not found.');
       }
     } catch (error) {
       Alert.alert('Error retrieving user:', (error as Error).message);
+      clearState();
       console.error('Error retrieving user:', error);
     }
   }, []);
+
+  const clearState = () => {
+    setEmail('');
+    setPoints('');
+    setScanned(false);
+    setUserPoints(null);
+    setSelectedUser(null);
+  };
 
   const addPoints = useCallback(async (uid: string) => {
     try {
@@ -89,9 +99,11 @@ const AdminHomeScreen = () => {
         Alert.alert('Points added successfully!');
       } else {
         Alert.alert('User not found.');
+        clearState();
       }
     } catch (error) {
       Alert.alert('Error updating points:', (error as Error).message);
+      clearState();
     }
   }, [points]);
 
@@ -109,16 +121,14 @@ const AdminHomeScreen = () => {
         const userDoc = userQuerySnapshot.docs[0];
         await addPoints(userDoc.id);
         // Clear all fields after adding points
-        setEmail('');
-        setPoints('');
-        setScanned(false);
-        setUserPoints(null);
-        setSelectedUser(null);
+        clearState();
       } else {
         Alert.alert('User not found.');
+        clearState();
       }
     } catch (error) {
       Alert.alert('Error updating points:', (error as Error).message);
+      clearState();
     }
   }, [email, points, addPoints]);
 
@@ -318,7 +328,7 @@ const styles = StyleSheet.create({
     backgroundColor: overlayColor,
   },
   button: {
-    top:20,
+    top: 20,
     backgroundColor: '#1e90ff',
     padding: 15,
     borderRadius: 10,
