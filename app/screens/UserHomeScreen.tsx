@@ -180,15 +180,16 @@ const UserHomeScreen = () => {
       <View style={styles.recentActivities}>
         <Text style={styles.recentActivitiesTitle}>Recent Activity</Text>
         <FlatList
-          data={recentActivities}
-          renderItem={({ item }) => (
-            <View style={styles.activityItem}>
-              <Text style={styles.activityDescription}>{item.description}</Text>
-              <Text style={styles.activityPoints}>{item.points}</Text>
-            </View>
-          )}
-          keyExtractor={item => item.id}
-        />
+  data={recentActivities}
+  renderItem={({ item }) => (
+    <View style={styles.activityItem}>
+      <Text style={styles.activityDescription}>{item.description}</Text>
+      <Text style={styles.activityPoints}>{item.points}</Text>
+    </View>
+  )}
+  keyExtractor={(item, index) => item.id || index.toString()}
+/>
+
       </View>
 
       <Modal
