@@ -18,7 +18,7 @@ import { LogBox } from 'react-native';
 import ChangePrice from './components/ChangePrice'; // Adjust the path as needed
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
-
+import './index.css';
 const AdminDrawerNavigator = () => (
   <Drawer.Navigator
     initialRouteName="AdminHomeScreen"
