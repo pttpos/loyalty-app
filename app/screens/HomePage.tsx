@@ -1,3 +1,4 @@
+// screens/HomePage.tsx
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
@@ -7,6 +8,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import HorizontalScrollBanner from '../components/HorizontalScrollBanner';
+import BottomMenu from '../components/BottomMenu';
 
 const HomePage = () => {
   const navigation = useNavigation<any>();
@@ -66,7 +68,7 @@ const HomePage = () => {
 
   const updateTimeAndGreeting = () => {
     const now = new Date();
-    const hours = now.getUTCHours() + 7; // Cambodia is UTC+7
+    const hours = now.getUTCHours() + 7;
     const adjustedHours = hours % 24;
 
     const minutes = now.getMinutes().toString().padStart(2, '0');
@@ -128,24 +130,7 @@ const HomePage = () => {
         </View>
       </ScrollView>
 
-      <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem}>
-          <MaterialCommunityIcons name="home" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <MaterialCommunityIcons name="credit-card" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Card</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserHomeScreen')}>
-          <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>QR</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Redeem</Text>
-        </TouchableOpacity>
-      </View>
+      <BottomMenu /> 
     </View>
   );
 };
@@ -232,24 +217,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     textAlign: 'center',
     marginVertical: 5,
-  },
-  menuContainer: {
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    paddingVertical: 10,
-    backgroundColor: '#ff0000',
-    position: 'absolute',
-    bottom: 0,
-    width: '100%',
-    height: 75,
-    alignItems: 'center',
-  },
-  menuItem: {
-    alignItems: 'center',
-  },
-  menuText: {
-    color: '#ffffff',
-    fontSize: 16,
   },
 });
 
