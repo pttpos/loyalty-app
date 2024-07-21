@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef } from "react";
-import { View, Text, Alert, TouchableOpacity, StyleSheet, FlatList, Modal, Button, Image, Animated } from 'react-native';
+import React, { useState, useEffect, useRef, useCallback } from "react";
+import { View, Text, Alert, TouchableOpacity, StyleSheet, FlatList, Modal, Button, Image, Animated, ActivityIndicator } from 'react-native';
 import { BarCodeScanner } from "expo-barcode-scanner";
 import QRCode from 'react-native-qrcode-svg';
 import { auth, db } from "../services/firebase";
 import { doc, updateDoc, getDoc, arrayUnion, collection, addDoc } from "firebase/firestore";
-import { useNavigation } from '@react-navigation/native';
+import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';  // Using Expo's vector icons
 import { LogBox } from 'react-native';
 
@@ -20,36 +20,44 @@ const UserHomeScreen = () => {
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const navigation = useNavigation<any>();
   const [recentActivities, setRecentActivities] = useState<Array<{ id: string, description: string, points: number }>>([]);
+  const [loading, setLoading] = useState<boolean>(true);  // State for loading
   const isDataFetched = useRef(false); // Ref to keep track if data is fetched
 
-  useEffect(() => {
-    const fetchUserData = async () => {
-      if (isDataFetched.current) {
-        return; // If data is already fetched, return
-      }
-      const user = auth.currentUser;
-      if (user) {
-        setUserId(user.uid);
-        const userRef = doc(db, 'users', user.uid);
-        const userDoc = await getDoc(userRef);
-        if (userDoc.exists()) {
-          const userData = userDoc.data();
-          setPoints(userData.points);
-          setRecentActivities(userData.recentActivities || []);
-          setUserName(userData.username); // Assuming the name field is stored as 'name'
-          setSureName(userData.surname);
-          setPhone(userData.phone);   // Assuming the phone field is stored as 'phone'
-          isDataFetched.current = true; // Mark data as fetched
+  useFocusEffect(
+    useCallback(() => {
+      const fetchUserData = async () => {
+        setLoading(true);
+        const user = auth.currentUser;
+        if (user) {
+          setUserId(user.uid);
+          const userRef = doc(db, 'users', user.uid);
+          const userDoc = await getDoc(userRef);
+          if (userDoc.exists()) {
+            const userData = userDoc.data();
+            setPoints(userData.points);
+            setRecentActivities(userData.recentActivities || []);
+            setUserName(userData.username); // Assuming the name field is stored as 'name'
+            setSureName(userData.surname);
+            setPhone(userData.phone);   // Assuming the phone field is stored as 'phone'
+            isDataFetched.current = true; // Mark data as fetched
+          }
         }
-      }
-    };
+        setLoading(false);  // Set loading to false once data is fetched
+      };
 
+      fetchUserData();
+      return () => {
+        setLoading(false);
+      };
+    }, [])
+  );
+
+  useEffect(() => {
     const getBarCodeScannerPermissions = async () => {
       const { status } = await BarCodeScanner.requestPermissionsAsync();
       setHasPermission(status === 'granted');
     };
 
-    fetchUserData();
     getBarCodeScannerPermissions();
   }, []);
 
@@ -147,106 +155,111 @@ const UserHomeScreen = () => {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Image source={require('../../assets/images/logo_Station.png')} style={styles.logo} />
-        <Text style={styles.title}>Loyalty Balance</Text>
-        <View style={styles.pointsRow}>
-          <Text style={styles.points}>{points.toFixed(2)}pts</Text>
-          <Text style={styles.subtitle}>1200 points till your next reward</Text>
-        </View>
-        <View style={styles.userInfo}>
-          <Text style={styles.userName}>{sureName} {userName}</Text>
-          <Text style={styles.userCard}>{phone}</Text>
-        </View>
-      </View>
-      <View style={styles.buttonRow}>
-        <View style={styles.card}>
-          <Animated.View style={{ transform: [{ scale: animatedScale }] }}>
-            <TouchableOpacity style={styles.cardContent} onPress={() => { setQrModalVisible(true); animateButton(); }}>
-              <MaterialCommunityIcons name="qrcode" size={30} color="#fff" />
-              <Text style={styles.cardText}>My QR-Code</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-        <View style={styles.card}>
-          <Animated.View style={{ transform: [{ scale: animatedScale }] }}>
-            <TouchableOpacity style={styles.cardContent} onPress={() => { setScannerVisible(true); animateButton(); }}>
-              <MaterialCommunityIcons name="qrcode-scan" size={24} color="#fff" />
-              <Text style={styles.cardText}>Scan QR Code</Text>
-            </TouchableOpacity>
-          </Animated.View>
-        </View>
-      </View>
-      <View style={styles.recentActivities}>
-        <Text style={styles.recentActivitiesTitle}>Recent Activity</Text>
-        <FlatList
-  data={recentActivities}
-  renderItem={({ item }) => (
-    <View style={styles.activityItem}>
-      <Text style={styles.activityDescription}>{item.description}</Text>
-      <Text style={styles.activityPoints}>{item.points}</Text>
-    </View>
-  )}
-  keyExtractor={(item, index) => item.id || index.toString()}
-/>
+      {loading ? (
+        <ActivityIndicator size="large" color="#FF6347" style={styles.loading} />
+      ) : (
+        <>
+          <View style={styles.header}>
+            <Image source={require('../../assets/images/logo_Station.png')} style={styles.logo} />
+            <Text style={styles.title}>Loyalty Balance</Text>
+            <View style={styles.pointsRow}>
+              <Text style={styles.points}>{points.toFixed(2)}pts</Text>
+              <Text style={styles.subtitle}>1200 points till your next reward</Text>
+            </View>
+            <View style={styles.userInfo}>
+              <Text style={styles.userName}>{sureName} {userName}</Text>
+              <Text style={styles.userCard}>{phone}</Text>
+            </View>
+          </View>
+          <View style={styles.buttonRow}>
+            <View style={styles.card}>
+              <Animated.View style={{ transform: [{ scale: animatedScale }] }}>
+                <TouchableOpacity style={styles.cardContent} onPress={() => { setQrModalVisible(true); animateButton(); }}>
+                  <MaterialCommunityIcons name="qrcode" size={30} color="#fff" />
+                  <Text style={styles.cardText}>My QR-Code</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+            <View style={styles.card}>
+              <Animated.View style={{ transform: [{ scale: animatedScale }] }}>
+                <TouchableOpacity style={styles.cardContent} onPress={() => { setScannerVisible(true); animateButton(); }}>
+                  <MaterialCommunityIcons name="qrcode-scan" size={24} color="#fff" />
+                  <Text style={styles.cardText}>Scan QR Code</Text>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+          </View>
+          <View style={styles.recentActivities}>
+            <Text style={styles.recentActivitiesTitle}>Recent Activity</Text>
+            <FlatList
+              data={recentActivities}
+              renderItem={({ item }) => (
+                <View style={styles.activityItem}>
+                  <Text style={styles.activityDescription}>{item.description}</Text>
+                  <Text style={styles.activityPoints}>{item.points}</Text>
+                </View>
+              )}
+              keyExtractor={(item, index) => item.id || index.toString()}
+            />
+          </View>
 
-      </View>
-
-      <Modal
-        animationType="slide"
-        transparent={false}
-        visible={scannerVisible}
-        onRequestClose={() => {
-          setScannerVisible(false);
-        }}
-      >
-        <View style={styles.modalContainer}>
-          <BarCodeScanner
-            onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
-            style={StyleSheet.absoluteFillObject}
-          />
-          {scanned && <Button title="Tap to Scan Again" onPress={() => setScanned(false)} />}
-          <Button title="Close Scanner" onPress={() => setScannerVisible(false)} />
-        </View>
-      </Modal>
-      <Modal
-        animationType="slide"
-        transparent={true}
-        visible={qrModalVisible}
-        onRequestClose={() => {
-          setQrModalVisible(false);
-        }}
-      >
-        <View style={styles.qrModalContainer}>
-          <View style={styles.qrModal}>
-            <Text style={styles.modalTitle}>QR Code</Text>
-            {userId && (
-              <QRCode value={userId} size={200} />
-            )}
-            <TouchableOpacity onPress={() => setQrModalVisible(false)} style={styles.closeButton}>
-              <Text style={styles.closeButtonText}>Close</Text>
+          <Modal
+            animationType="slide"
+            transparent={false}
+            visible={scannerVisible}
+            onRequestClose={() => {
+              setScannerVisible(false);
+            }}
+          >
+            <View style={styles.modalContainer}>
+              <BarCodeScanner
+                onBarCodeScanned={scanned ? undefined : handleBarCodeScanned}
+                style={StyleSheet.absoluteFillObject}
+              />
+              {scanned && <Button title="Tap to Scan Again" onPress={() => setScanned(false)} />}
+              <Button title="Close Scanner" onPress={() => setScannerVisible(false)} />
+            </View>
+          </Modal>
+          <Modal
+            animationType="slide"
+            transparent={true}
+            visible={qrModalVisible}
+            onRequestClose={() => {
+              setQrModalVisible(false);
+            }}
+          >
+            <View style={styles.qrModalContainer}>
+              <View style={styles.qrModal}>
+                <Text style={styles.modalTitle}>QR Code</Text>
+                {userId && (
+                  <QRCode value={userId} size={200} />
+                )}
+                <TouchableOpacity onPress={() => setQrModalVisible(false)} style={styles.closeButton}>
+                  <Text style={styles.closeButtonText}>Close</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </Modal>
+          <View style={styles.menuContainer}>
+            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('HomePage')}>
+              <MaterialCommunityIcons name="home" size={24} color="#ffffff" />
+              <Text style={styles.menuText}>Home</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem}>
+              <MaterialCommunityIcons name="credit-card" size={24} color="#ffffff" />
+              <Text style={styles.menuText}>Card</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserHomeScreen')}>
+              <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
+              <Text style={styles.menuText}>QR</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('userofscan')}>
+              <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
+              <Text style={styles.menuText}>Redeem</Text>
             </TouchableOpacity>
           </View>
-        </View>
-      </Modal>
-      <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('HomePage')}>
-          <MaterialCommunityIcons name="home" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Home</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem}>
-          <MaterialCommunityIcons name="credit-card" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Card</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserHomeScreen')}>
-          <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>QR</Text>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('userofscan')}>
-          <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
-          <Text style={styles.menuText}>Redeem</Text>
-        </TouchableOpacity>
-      </View>
+        </>
+      )}
     </View>
   );
 };
@@ -254,6 +267,7 @@ LogBox.ignoreLogs([
   'BarCodeScanner has been deprecated',
   '@firebase/auth',
 ]);
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -370,6 +384,9 @@ const styles = StyleSheet.create({
   },
   activityPoints: {
     color: "#FFD700",
+  },
+  loading: {
+    marginTop: 100
   },
   modalContainer: {
     flex: 1,

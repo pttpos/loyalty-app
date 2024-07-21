@@ -169,7 +169,7 @@ const LoginScreen = () => {
           secureTextEntry
         />
         {loading ? (
-          <ActivityIndicator size="large" color="#FF6347" />
+          <ActivityIndicator size="large" color="#4784ff" />
         ) : (
           <TouchableOpacity style={styles.button} onPress={handleAuth}>
             <Text style={styles.buttonText}>{isLogin ? 'Login' : 'Register'}</Text>
@@ -249,7 +249,7 @@ const styles = StyleSheet.create({
   },
   button: {
     height: 50,
-    backgroundColor: '#FF6347',
+    backgroundColor: '#4784ff',
     borderRadius: 8,
     justifyContent: 'center',
     alignItems: 'center',
@@ -265,7 +265,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   switchButtonText: {
-    color: '#FF6347',
+    color: '#4784ff',
     fontSize: 14,
   },
   terms: {
