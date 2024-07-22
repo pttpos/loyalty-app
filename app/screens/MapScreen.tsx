@@ -3,6 +3,7 @@ import React from 'react';
 import { StyleSheet, View } from 'react-native';
 import { WebView } from 'react-native-webview';
 import BottomMenu from '../components/BottomMenu';
+import { LogBox } from 'react-native';
 
 const MapScreen = () => {
   return (
@@ -19,6 +20,10 @@ const MapScreen = () => {
     </View>
   );
 };
+LogBox.ignoreLogs([
+  'BarCodeScanner has been deprecated',
+  '@firebase/auth',
+]);
 
 const styles = StyleSheet.create({
   container: {
