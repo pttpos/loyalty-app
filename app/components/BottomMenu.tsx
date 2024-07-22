@@ -21,10 +21,6 @@ const BottomMenu = () => {
         <MaterialCommunityIcons name="qrcode-scan" size={24} color="#ffffff" />
         <Text style={styles.menuText}>QR</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={styles.menuItem}>
-        <MaterialCommunityIcons name="gift" size={24} color="#ffffff" />
-        <Text style={styles.menuText}>Redeem</Text>
-      </TouchableOpacity>
       <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MapScreen')}>
         <MaterialCommunityIcons name="map" size={24} color="#ffffff" />
         <Text style={styles.menuText}>Map</Text>

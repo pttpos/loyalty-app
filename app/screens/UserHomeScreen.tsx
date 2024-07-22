@@ -22,7 +22,7 @@ const UserHomeScreen = () => {
   const [phone, setPhone] = useState<string | null>(null);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [qrModalVisible, setQrModalVisible] = useState(false);
-  const [recentActivities, setRecentActivities] = useState<Array<{ id: string, description: string, points: number }>>([]);
+  const [recentActivities, setRecentActivities] = useState<Array<{ id: string, description: string, points: number, timestamp: string }>>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const isDataFetched = useRef(false);
   const navigation = useNavigation<any>();
@@ -143,7 +143,8 @@ const UserHomeScreen = () => {
                 recentActivities: arrayUnion({
                   id: data,
                   description: `Scanned QR code for ${qrCodeData.points} points`,
-                  points: qrCodeData.points
+                  points: qrCodeData.points,
+                  timestamp: transactionData.timestamp
                 })
               });
 
@@ -151,7 +152,8 @@ const UserHomeScreen = () => {
               setRecentActivities(prevActivities => [...prevActivities, {
                 id: data,
                 description: `Scanned QR code for ${qrCodeData.points} points`,
-                points: qrCodeData.points
+                points: qrCodeData.points,
+                timestamp: transactionData.timestamp
               }]);
               Alert.alert("Success", `You've received ${qrCodeData.points} points!`);
             } else {

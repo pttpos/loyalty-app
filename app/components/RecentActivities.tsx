@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
+import moment from 'moment';
 
 interface RecentActivitiesProps {
-  recentActivities: Array<{ id: string, description: string, points: number }>;
+  recentActivities: Array<{ id: string, description: string, points: number, timestamp: string }>;
 }
 
 const RecentActivities: React.FC<RecentActivitiesProps> = ({ recentActivities }) => {
@@ -15,6 +16,7 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ recentActivities })
           <View style={styles.activityItem}>
             <Text style={styles.activityDescription}>{item.description}</Text>
             <Text style={styles.activityPoints}>{item.points}</Text>
+            <Text style={styles.activityTimestamp}>{moment(item.timestamp).format('YYYY-MM-DD HH:mm:ss')}</Text>
           </View>
         )}
         keyExtractor={(item, index) => item.id || index.toString()}
@@ -45,9 +47,19 @@ const styles = StyleSheet.create({
   },
   activityDescription: {
     color: "#fff",
+    flex: 2,
   },
   activityPoints: {
     color: "#FFD700",
+    flex: 1,
+    textAlign: 'right',
+  },
+  activityTimestamp: {
+    color: "#888",
+    flex: 1,
+    textAlign: 'right',
+    fontSize: 12,
+    marginTop: 5,
   },
   list: {
     maxHeight: '80%', // Adjust based on your layout requirements
