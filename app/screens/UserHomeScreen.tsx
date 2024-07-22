@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, Alert, StyleSheet, Animated, ActivityIndicator } from 'react-native';
+import { View, Text, Alert, StyleSheet, Animated, ActivityIndicator, Modal } from 'react-native';
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { auth, db } from "../services/firebase";
 import { doc, updateDoc, getDoc, arrayUnion, collection, addDoc } from "firebase/firestore";
@@ -24,6 +24,7 @@ const UserHomeScreen = () => {
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [recentActivities, setRecentActivities] = useState<Array<{ id: string, description: string, points: number, timestamp: string }>>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [scanningLoading, setScanningLoading] = useState<boolean>(false);
   const isDataFetched = useRef(false);
   const navigation = useNavigation<any>();
 
@@ -111,6 +112,7 @@ const UserHomeScreen = () => {
 
   const handleBarCodeScanned = async ({ data }: { type: string; data: string }) => {
     setScanned(true);
+    setScanningLoading(true); // Start loading when scanning
     setScannerVisible(false);
     try {
       const qrCodeRef = doc(db, 'qrcodes', data);
@@ -169,6 +171,7 @@ const UserHomeScreen = () => {
     } catch (error) {
       Alert.alert("Error", "Failed to scan QR code.");
     }
+    setScanningLoading(false); // Stop loading when scanning is done
     setScanned(false);
   };
 
@@ -213,6 +216,13 @@ const UserHomeScreen = () => {
           <RecentActivities recentActivities={recentActivities} />
           <QRModals scannerVisible={scannerVisible} setScannerVisible={setScannerVisible} qrModalVisible={qrModalVisible} setQrModalVisible={setQrModalVisible} scanned={scanned} handleBarCodeScanned={handleBarCodeScanned} userId={userId} setScanned={setScanned} />
           <BottomMenu />
+          {scanningLoading && (
+            <Modal transparent={true} animationType="none" visible={scanningLoading}>
+              <View style={styles.overlay}>
+                <ActivityIndicator size="large" color="#FF6347" />
+              </View>
+            </Modal>
+          )}
         </>
       )}
     </View>
@@ -231,6 +241,17 @@ const styles = StyleSheet.create({
   },
   loading: {
     marginTop: 100,
+  },
+  overlay: {
+    flex: 1,
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    top: 0,
+    bottom: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0,0,0,0.5)',
   },
   menuContainer: {
     flexDirection: 'row',
