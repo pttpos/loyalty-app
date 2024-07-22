@@ -1,6 +1,5 @@
-// screens/UserHomeScreen.tsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { View, Text, Alert, StyleSheet, Animated, ActivityIndicator, TouchableOpacity } from 'react-native';
+import { View, Text, Alert, StyleSheet, Animated, ActivityIndicator } from 'react-native';
 import { BarCodeScanner } from "expo-barcode-scanner";
 import { auth, db } from "../services/firebase";
 import { doc, updateDoc, getDoc, arrayUnion, collection, addDoc } from "firebase/firestore";
@@ -22,38 +21,49 @@ const UserHomeScreen = () => {
   const [phone, setPhone] = useState<string | null>(null);
   const [scannerVisible, setScannerVisible] = useState(false);
   const [qrModalVisible, setQrModalVisible] = useState(false);
-  const navigation = useNavigation<any>();
   const [recentActivities, setRecentActivities] = useState<Array<{ id: string, description: string, points: number }>>([]);
-  const [loading, setLoading] = useState<boolean>(true);  // State for loading
-  const isDataFetched = useRef(false); // Ref to keep track if data is fetched
+  const [loading, setLoading] = useState<boolean>(true);
+  const isDataFetched = useRef(false);
+  const navigation = useNavigation<any>();
+
+  const fetchUserData = useCallback(async () => {
+    try {
+      if (isDataFetched.current) {
+        setLoading(false);
+        return;
+      }
+
+      setLoading(true);
+      const user = auth.currentUser;
+      if (user) {
+        setUserId(user.uid);
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          setPoints(userData.points);
+          setRecentActivities(userData.recentActivities || []);
+          setUserName(userData.username);
+          setSureName(userData.surname);
+          setPhone(userData.phone);
+          isDataFetched.current = true;
+        }
+      }
+      setLoading(false);
+    } catch (error) {
+      console.error("Error fetching user data:", error);
+      setLoading(false);
+    }
+  }, []);
 
   useFocusEffect(
     useCallback(() => {
-      const fetchUserData = async () => {
-        setLoading(true);
-        const user = auth.currentUser;
-        if (user) {
-          setUserId(user.uid);
-          const userRef = doc(db, 'users', user.uid);
-          const userDoc = await getDoc(userRef);
-          if (userDoc.exists()) {
-            const userData = userDoc.data();
-            setPoints(userData.points);
-            setRecentActivities(userData.recentActivities || []);
-            setUserName(userData.username); // Assuming the name field is stored as 'name'
-            setSureName(userData.surname);
-            setPhone(userData.phone);   // Assuming the phone field is stored as 'phone'
-            isDataFetched.current = true; // Mark data as fetched
-          }
-        }
-        setLoading(false);  // Set loading to false once data is fetched
-      };
-
       fetchUserData();
       return () => {
         setLoading(false);
       };
-    }, [])
+    }, [fetchUserData])
   );
 
   useEffect(() => {
@@ -126,7 +136,6 @@ const UserHomeScreen = () => {
     setScanned(false);
   };
 
-
   if (hasPermission === null) {
     return <Text>Requesting for camera permission</Text>;
   }
@@ -168,12 +177,13 @@ const UserHomeScreen = () => {
           <RecentActivities recentActivities={recentActivities} />
           <QRModals scannerVisible={scannerVisible} setScannerVisible={setScannerVisible} qrModalVisible={qrModalVisible} setQrModalVisible={setQrModalVisible} scanned={scanned} handleBarCodeScanned={handleBarCodeScanned} userId={userId} setScanned={setScanned} />
 
-          <BottomMenu /> 
+          <BottomMenu />
         </>
       )}
     </View>
   );
 };
+
 LogBox.ignoreLogs([
   'BarCodeScanner has been deprecated',
   '@firebase/auth',
