@@ -17,7 +17,7 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ recentActivities })
             <Text style={styles.activityPoints}>{item.points}</Text>
           </View>
         )}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item, index) => item.id || index.toString()}
         style={styles.list}
       />
     </View>
@@ -50,7 +50,7 @@ const styles = StyleSheet.create({
     color: "#FFD700",
   },
   list: {
-    maxHeight: '80%' // Adjust based on your layout requirements
+    maxHeight: '80%', // Adjust based on your layout requirements
   }
 });
 

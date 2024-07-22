@@ -208,7 +208,7 @@ const UserHomeScreen = () => {
         <>
           <UserHeader points={points} userName={userName} sureName={sureName} phone={phone} />
           <QRCodeButtons setQrModalVisible={setQrModalVisible} setScannerVisible={setScannerVisible} animatedScale={animatedScale} animateButton={animateButton} />
-          <RecentActivities recentActivities={recentActivities.map(activity => ({ ...activity, key: activity.id }))} />
+          <RecentActivities recentActivities={recentActivities} />
           <QRModals scannerVisible={scannerVisible} setScannerVisible={setScannerVisible} qrModalVisible={qrModalVisible} setQrModalVisible={setQrModalVisible} scanned={scanned} handleBarCodeScanned={handleBarCodeScanned} userId={userId} setScanned={setScanned} />
           <BottomMenu />
         </>
