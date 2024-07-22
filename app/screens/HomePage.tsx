@@ -1,14 +1,14 @@
-// screens/HomePage.tsx
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, Image, TouchableOpacity, ActivityIndicator, Modal, Alert } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
 import { getAuth } from 'firebase/auth';
-import { getUserProfile } from '../services/userService';
+import { getUserProfile, updateUserProfile } from '../services/userService';
 import { collection, getDocs } from 'firebase/firestore';
 import { db } from '../services/firebase';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import HorizontalScrollBanner from '../components/HorizontalScrollBanner';
 import BottomMenu from '../components/BottomMenu';
+import UserProfileScreen from '../components/UserProfileScreen';
 
 const HomePage = () => {
   const navigation = useNavigation<any>();
@@ -17,6 +17,7 @@ const HomePage = () => {
   const [horizontalBanners, setHorizontalBanners] = useState<any[]>([]);
   const [greeting, setGreeting] = useState<string>('');
   const [loading, setLoading] = useState<boolean>(true);
+  const [showProfile, setShowProfile] = useState<boolean>(false);
   const auth = getAuth();
   const user = auth.currentUser;
 
@@ -66,6 +67,10 @@ const HomePage = () => {
     navigation.navigate('DetailHorizontalBannerPage', { bannerId });
   };
 
+  const handleProfileImagePress = () => {
+    setShowProfile(true);
+  };
+
   const updateTimeAndGreeting = () => {
     const now = new Date();
     const hours = now.getUTCHours() + 7;
@@ -94,6 +99,23 @@ const HomePage = () => {
     return () => clearInterval(interval);
   }, []);
 
+  const handleSaveProfile = async (updatedProfile: any) => {
+    if (!user) {
+      Alert.alert('Error', 'User is not authenticated.');
+      return;
+    }
+
+    try {
+      await updateUserProfile(user.uid, updatedProfile);
+      setUserProfile(updatedProfile);
+      Alert.alert('Success', 'Profile updated successfully.');
+      setShowProfile(false);
+    } catch (error) {
+      Alert.alert('Error', 'Failed to update profile.');
+      console.error('Error updating profile:', error);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -111,7 +133,13 @@ const HomePage = () => {
               <Text style={styles.vouchers}>0 vouchers</Text>
             </View>
           </View>
-          <Image source={require('../../assets/images/favicon.png')} style={styles.profileImage} />
+          <TouchableOpacity onPress={handleProfileImagePress}>
+            {userProfile && userProfile.profileImageUrl ? (
+              <Image source={{ uri: userProfile.profileImageUrl }} style={styles.profileImage} />
+            ) : (
+              <Image source={require('../../assets/images/favicon.png')} style={styles.profileImage} />
+            )}
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -131,6 +159,10 @@ const HomePage = () => {
       </ScrollView>
 
       <BottomMenu /> 
+
+      <Modal visible={showProfile} animationType="slide">
+        <UserProfileScreen profile={userProfile} onClose={() => setShowProfile(false)} onSaveProfile={handleSaveProfile} />
+      </Modal>
     </View>
   );
 };
@@ -212,11 +244,6 @@ const styles = StyleSheet.create({
     width: '100%',
     height: 250,
     borderRadius: 10,
-  },
-  bannerDescription: {
-    fontSize: 16,
-    textAlign: 'center',
-    marginVertical: 5,
   },
 });
 

@@ -1,4 +1,3 @@
-// App.tsx
 import 'react-native-gesture-handler';
 import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
@@ -13,11 +12,12 @@ import DetailBannerPage from './screens/DetailBannerPage';
 import DetailHorizontalBannerPage from './screens/DetailHorizontalBannerPage';
 import HomePage from './screens/HomePage';
 import POSScreen from './screens/POSScreen';
-import MapScreen from './screens/MapScreen'; 
+import MapScreen from './screens/MapScreen';
 import HorizontalBannerAdminScreen from './screens/HorizontalBannerAdminScreen';
 import CustomDrawerContent from './components/CustomDrawerContent';
-import ChangePrice from './components/ChangePrice'; 
+import ChangePrice from './components/ChangePrice';
 import { LogBox } from 'react-native';
+
 const Stack = createNativeStackNavigator();
 const Drawer = createDrawerNavigator();
 

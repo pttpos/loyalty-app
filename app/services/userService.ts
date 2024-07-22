@@ -42,6 +42,15 @@ export const getUserProfile = async (uid: string): Promise<UserProfile | null> =
   }
 };
 
+export const updateUserProfile = async (uid: string, profile: Partial<UserProfile>): Promise<void> => {
+  try {
+    await updateDoc(doc(db, 'users', uid), profile);
+  } catch (error) {
+    console.error("Error updating user profile: ", error);
+    throw error;
+  }
+};
+
 export const updateUserVerification = async (uid: string): Promise<void> => {
   try {
     await updateDoc(doc(db, 'users', uid), { emailVerified: true });
