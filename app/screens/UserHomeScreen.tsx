@@ -5,6 +5,7 @@ import { auth, db } from "../services/firebase";
 import { doc, updateDoc, getDoc, arrayUnion, collection, addDoc } from "firebase/firestore";
 import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { LogBox } from 'react-native';
+import * as Notifications from 'expo-notifications';
 import UserHeader from '../components/UserHeader';
 import QRCodeButtons from '../components/QRCodeButtons';
 import RecentActivities from '../components/RecentActivities';
@@ -25,6 +26,17 @@ const UserHomeScreen = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const isDataFetched = useRef(false);
   const navigation = useNavigation<any>();
+
+  // Function to handle notifications
+  const sendNotification = async (title: string, body: string) => {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title,
+        body,
+      },
+      trigger: null,
+    });
+  };
 
   const fetchUserData = useCallback(async () => {
     try {
@@ -74,6 +86,28 @@ const UserHomeScreen = () => {
 
     getBarCodeScannerPermissions();
   }, []);
+
+  // Polling to check for updates every 10 seconds
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const user = auth.currentUser;
+      if (user) {
+        const userRef = doc(db, 'users', user.uid);
+        const userDoc = await getDoc(userRef);
+
+        if (userDoc.exists()) {
+          const userData = userDoc.data();
+          if (userData.points !== points || userData.recentActivities.length !== recentActivities.length) {
+            setPoints(userData.points);
+            setRecentActivities(userData.recentActivities || []);
+            sendNotification("Data Updated", "Your points or activities have been updated.");
+          }
+        }
+      }
+    }, 10000); // Check every 10 seconds
+
+    return () => clearInterval(interval);
+  }, [points, recentActivities]);
 
   const handleBarCodeScanned = async ({ data }: { type: string; data: string }) => {
     setScanned(true);
@@ -174,9 +208,8 @@ const UserHomeScreen = () => {
         <>
           <UserHeader points={points} userName={userName} sureName={sureName} phone={phone} />
           <QRCodeButtons setQrModalVisible={setQrModalVisible} setScannerVisible={setScannerVisible} animatedScale={animatedScale} animateButton={animateButton} />
-          <RecentActivities recentActivities={recentActivities} />
+          <RecentActivities recentActivities={recentActivities.map(activity => ({ ...activity, key: activity.id }))} />
           <QRModals scannerVisible={scannerVisible} setScannerVisible={setScannerVisible} qrModalVisible={qrModalVisible} setQrModalVisible={setQrModalVisible} scanned={scanned} handleBarCodeScanned={handleBarCodeScanned} userId={userId} setScanned={setScanned} />
-
           <BottomMenu />
         </>
       )}

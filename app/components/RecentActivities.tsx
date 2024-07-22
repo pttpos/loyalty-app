@@ -1,4 +1,3 @@
-// components/RecentActivities.tsx
 import React from 'react';
 import { View, Text, FlatList, StyleSheet } from 'react-native';
 
@@ -18,7 +17,8 @@ const RecentActivities: React.FC<RecentActivitiesProps> = ({ recentActivities })
             <Text style={styles.activityPoints}>{item.points}</Text>
           </View>
         )}
-        keyExtractor={(item, index) => item.id || index.toString()}
+        keyExtractor={(item) => item.id}
+        style={styles.list}
       />
     </View>
   );
@@ -49,6 +49,9 @@ const styles = StyleSheet.create({
   activityPoints: {
     color: "#FFD700",
   },
+  list: {
+    maxHeight: '80%' // Adjust based on your layout requirements
+  }
 });
 
 export default RecentActivities;

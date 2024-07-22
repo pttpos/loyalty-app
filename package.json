@@ -49,7 +49,8 @@
     "react-native-svg": "^15.2.0",
     "react-native-vector-icons": "^10.1.0",
     "react-native-view-shot": "^3.8.0",
-    "react-native-web": "~0.19.10"
+    "react-native-web": "~0.19.10",
+    "expo-notifications": "~0.28.10"
   },
   "devDependencies": {
     "@expo/webpack-config": "^19.0.1",
