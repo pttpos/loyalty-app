@@ -6,7 +6,7 @@ export interface UserProfile {
   email: string;
   role: string;
   emailVerified: boolean;
-  createdAt: Date;
+  createdAt: any; // Timestamp or Date
   points: number;
   username: string;
   surname: string;

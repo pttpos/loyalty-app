@@ -5,7 +5,13 @@ import { getAuth, signOut } from 'firebase/auth';
 import UserProfile from './UserProfile';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 
-const UserProfileScreen = ({ profile, onClose, onSaveProfile }: { profile: any, onClose: () => void, onSaveProfile: (updatedProfile: any) => void }) => {
+interface UserProfileScreenProps {
+  profile: any;
+  onClose: () => void;
+  onSaveProfile: (updatedProfile: any) => void;
+}
+
+const UserProfileScreen: React.FC<UserProfileScreenProps> = ({ profile, onClose, onSaveProfile }) => {
   const [loading, setLoading] = useState(false);
   const navigation = useNavigation<any>();
 
@@ -71,7 +77,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   backButton: {
-    top:30,
+    top: 30,
     flexDirection: 'row',
     alignItems: 'center',
   },

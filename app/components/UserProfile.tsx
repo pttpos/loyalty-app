@@ -1,10 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, ActivityIndicator, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
+import { getStorage, ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import moment from 'moment';
+import { auth, storage } from '../services/firebase';
+import { getUserProfile, updateUserProfile } from '../services/userService';
 
 interface UserProfileProps {
   profile: {
+    uid: string;
     profileImageUrl?: string;
     phone: string;
     surname: string;
@@ -12,7 +17,7 @@ interface UserProfileProps {
     gender?: string;
     birthday: string;
     email: string;
-    createdAt?: any; // Ensure the createdAt field is optional
+    createdAt?: any;
   };
   onSaveProfile: (updatedProfile: any) => void;
 }
@@ -25,7 +30,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
 
   useEffect(() => {
     if (profile.createdAt) {
-      const formattedJoinDate = moment(profile.createdAt.toDate()).format('MMMM DD, YYYY');
+      const formattedJoinDate = moment(
+        profile.createdAt instanceof Date
+          ? profile.createdAt
+          : profile.createdAt.toDate()
+      ).format('MMMM DD, YYYY');
       setJoinDate(formattedJoinDate);
     }
   }, [profile.createdAt]);
@@ -34,20 +43,82 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
     setUpdatedProfile({ ...updatedProfile, [field]: value });
   };
 
+  const pickImage = async () => {
+    let result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [4, 3],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      const { uri } = result.assets[0];
+      uploadImage(uri);
+    }
+  };
+
+  const uploadImage = async (uri: string) => {
+    try {
+      setLoading(true);
+      const response = await fetch(uri);
+      const blob = await response.blob();
+      const user = auth.currentUser;
+
+      if (!user) {
+        console.error('User is not authenticated.');
+        Alert.alert('Error', 'User is not authenticated.');
+        setLoading(false);
+        return;
+      }
+
+      const userId = user.uid;
+      const imageRef = ref(storage, `profileImages/${userId}.jpg`);
+      console.log('Uploading image to:', imageRef.fullPath);
+
+      uploadBytes(imageRef, blob).then((snapshot) => {
+        getDownloadURL(snapshot.ref).then((downloadURL) => {
+          console.log('Image uploaded. Download URL:', downloadURL);
+          handleInputChange('profileImageUrl', downloadURL);
+          setLoading(false);
+        }).catch((error) => {
+          console.error('Error getting download URL:', error);
+          setLoading(false);
+        });
+      }).catch((error) => {
+        console.error('Error uploading image:', error);
+        setLoading(false);
+      });
+    } catch (error) {
+      console.error('Error in uploadImage:', error);
+      Alert.alert('Error', 'Failed to upload image');
+      setLoading(false);
+    }
+  };
+
   const handleSave = async () => {
-    setLoading(true);
-    await onSaveProfile(updatedProfile);
-    setLoading(false);
-    setIsEditing(false);
+    try {
+      setLoading(true);
+      await onSaveProfile(updatedProfile);
+      const user = auth.currentUser;
+      if (user) {
+        await updateUserProfile(user.uid, updatedProfile);
+      }
+      setLoading(false);
+      setIsEditing(false);
+    } catch (error) {
+      console.error('Error saving profile:', error);
+      Alert.alert('Error', 'Failed to save profile');
+      setLoading(false);
+    }
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
       <View style={styles.header}>
         <View style={styles.profileImageContainer}>
-          <Image source={profile.profileImageUrl ? { uri: profile.profileImageUrl } : require('../../assets/images/favicon.png')} style={styles.profileImage} />
+          <Image source={updatedProfile.profileImageUrl ? { uri: updatedProfile.profileImageUrl } : require('../../assets/images/favicon.png')} style={styles.profileImage} />
           {isEditing && (
-            <TouchableOpacity style={styles.cameraIconContainer}>
+            <TouchableOpacity style={styles.cameraIconContainer} onPress={pickImage}>
               <MaterialCommunityIcons name="camera" size={20} color="#fff" />
             </TouchableOpacity>
           )}
@@ -141,13 +212,15 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
 
 const styles = StyleSheet.create({
   container: {
+    top:30,
     flexGrow: 1,
-    top: 25,
-    padding: 10,
+    padding: 20,
+    backgroundColor: '#f8f9fa',
   },
   header: {
     alignItems: 'center',
-    padding: 30,
+    marginBottom: 20,
+    paddingVertical: 20,
     backgroundColor: '#fff',
     borderRadius: 10,
     shadowColor: '#000',
@@ -155,7 +228,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 5,
     elevation: 3,
-    marginBottom: 20,
   },
   profileImageContainer: {
     position: 'relative',
