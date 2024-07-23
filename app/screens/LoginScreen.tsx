@@ -1,6 +1,7 @@
+// LoginScreen.tsx
 import React, { useState } from 'react';
 import { View, TextInput, Text, Alert, TouchableOpacity, StyleSheet, ActivityIndicator, Dimensions, Image, Keyboard } from 'react-native';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendEmailVerification } from 'firebase/auth';
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, sendPasswordResetEmail, sendEmailVerification } from 'firebase/auth';
 import { useNavigation } from '@react-navigation/native';
 import { auth } from '../services/firebase';
 import { createUserProfile, getUserProfile } from '../services/userService';
@@ -107,6 +108,28 @@ const LoginScreen = () => {
     }
   };
 
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address to reset your password');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      await sendPasswordResetEmail(auth, email);
+      Alert.alert('Success', 'Password reset email sent. Please check your inbox.');
+    } catch (error) {
+      if (error instanceof Error) {
+        Alert.alert('Error', error.message);
+      } else {
+        Alert.alert('Error', 'An unexpected error occurred');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -171,9 +194,16 @@ const LoginScreen = () => {
         {loading ? (
           <ActivityIndicator size="large" color="#4784ff" />
         ) : (
-          <TouchableOpacity style={styles.button} onPress={handleAuth}>
-            <Text style={styles.buttonText}>{isLogin ? 'Login' : 'Register'}</Text>
-          </TouchableOpacity>
+          <>
+            <TouchableOpacity style={styles.button} onPress={handleAuth}>
+              <Text style={styles.buttonText}>{isLogin ? 'Login' : 'Register'}</Text>
+            </TouchableOpacity>
+            {isLogin && (
+              <TouchableOpacity style={styles.forgotButton} onPress={handleForgotPassword}>
+                <Text style={styles.forgotButtonText}>Forgot Password?</Text>
+              </TouchableOpacity>
+            )}
+          </>
         )}
         <TouchableOpacity style={styles.switchButton} onPress={() => setIsLogin(!isLogin)}>
           <Text style={styles.switchButtonText}>
@@ -259,6 +289,14 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  forgotButton: {
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  forgotButtonText: {
+    color: '#4784ff',
+    fontSize: 14,
   },
   switchButton: {
     alignItems: 'center',
