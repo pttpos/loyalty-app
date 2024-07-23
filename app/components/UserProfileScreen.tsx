@@ -3,6 +3,7 @@ import { View, StyleSheet, ActivityIndicator, TouchableOpacity, Text, Alert } fr
 import { useNavigation } from '@react-navigation/native';
 import { getAuth, signOut } from 'firebase/auth';
 import UserProfile from './UserProfile';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 
 const UserProfileScreen = ({ profile, onClose, onSaveProfile }: { profile: any, onClose: () => void, onSaveProfile: (updatedProfile: any) => void }) => {
   const [loading, setLoading] = useState(false);
@@ -34,10 +35,13 @@ const UserProfileScreen = ({ profile, onClose, onSaveProfile }: { profile: any, 
 
   return (
     <View style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={onClose} disabled={loading}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color="#333" />
+          <Text style={styles.backButtonText}>Back to home</Text>
+        </TouchableOpacity>
+      </View>
       <UserProfile profile={profile} onSaveProfile={onSaveProfile} />
-      <TouchableOpacity style={styles.closeButton} onPress={onClose} disabled={loading}>
-        <Text style={styles.buttonText}>Close</Text>
-      </TouchableOpacity>
       <TouchableOpacity style={styles.logoutButton} onPress={handleLogout} disabled={loading}>
         <Text style={styles.logoutButtonText}>Log Out</Text>
       </TouchableOpacity>
@@ -61,12 +65,20 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  closeButton: {
-    padding: 15,
-    backgroundColor: '#1E90FF',
-    borderRadius: 30,
+  header: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginVertical: 10,
+    marginBottom: 20,
+  },
+  backButton: {
+    top:30,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  backButtonText: {
+    fontSize: 16,
+    color: '#333',
+    marginLeft: 5,
   },
   logoutButton: {
     padding: 15,
@@ -74,11 +86,6 @@ const styles = StyleSheet.create({
     borderRadius: 30,
     alignItems: 'center',
     marginVertical: 10,
-  },
-  buttonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   logoutButtonText: {
     color: '#fff',

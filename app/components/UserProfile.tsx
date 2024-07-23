@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, Button } from 'react-native';
+import { View, Text, StyleSheet, Image, TouchableOpacity, TextInput, ScrollView, ActivityIndicator } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import moment from 'moment';
 
@@ -21,6 +21,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
   const [isEditing, setIsEditing] = useState(false);
   const [updatedProfile, setUpdatedProfile] = useState(profile);
   const [joinDate, setJoinDate] = useState('');
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (profile.createdAt) {
@@ -33,8 +34,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
     setUpdatedProfile({ ...updatedProfile, [field]: value });
   };
 
-  const handleSave = () => {
-    onSaveProfile(updatedProfile);
+  const handleSave = async () => {
+    setLoading(true);
+    await onSaveProfile(updatedProfile);
+    setLoading(false);
     setIsEditing(false);
   };
 
@@ -55,12 +58,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
 
       <View style={styles.infoContainer}>
         <View style={styles.fieldContainer}>
+          <MaterialCommunityIcons name="phone" size={20} color="#888" style={styles.icon} />
           <Text style={styles.label}>Phone Number</Text>
           {isEditing ? (
             <TextInput
               style={styles.input}
               value={updatedProfile.phone}
               onChangeText={(value) => handleInputChange('phone', value)}
+              keyboardType="phone-pad"
             />
           ) : (
             <Text style={styles.value}>{profile.phone}</Text>
@@ -68,12 +73,14 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
         </View>
 
         <View style={styles.fieldContainer}>
+          <MaterialCommunityIcons name="email" size={20} color="#888" style={styles.icon} />
           <Text style={styles.label}>Email</Text>
           {isEditing ? (
             <TextInput
               style={styles.input}
               value={updatedProfile.email}
               onChangeText={(value) => handleInputChange('email', value)}
+              keyboardType="email-address"
             />
           ) : (
             <Text style={styles.value}>{profile.email}</Text>
@@ -81,6 +88,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
         </View>
 
         <View style={styles.fieldContainer}>
+          <MaterialCommunityIcons name="gender-male-female" size={20} color="#888" style={styles.icon} />
           <Text style={styles.label}>Gender</Text>
           {isEditing ? (
             <TextInput
@@ -94,6 +102,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
         </View>
 
         <View style={styles.fieldContainer}>
+          <MaterialCommunityIcons name="calendar" size={20} color="#888" style={styles.icon} />
           <Text style={styles.label}>Birthday</Text>
           {isEditing ? (
             <TextInput
@@ -109,10 +118,10 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
 
       {isEditing ? (
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.saveButton} onPress={handleSave}>
+          <TouchableOpacity style={styles.saveButton} onPress={handleSave} disabled={loading}>
             <Text style={styles.buttonText}>Save</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.cancelButton} onPress={() => setIsEditing(false)}>
+          <TouchableOpacity style={styles.cancelButton} onPress={() => setIsEditing(false)} disabled={loading}>
             <Text style={styles.buttonText}>Cancel</Text>
           </TouchableOpacity>
         </View>
@@ -121,6 +130,11 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
           <Text style={styles.editButtonText}>Edit Profile</Text>
         </TouchableOpacity>
       )}
+      {loading && (
+        <View style={styles.loadingOverlay}>
+          <ActivityIndicator size="large" color="#ffffff" />
+        </View>
+      )}
     </ScrollView>
   );
 };
@@ -128,7 +142,7 @@ const UserProfile: React.FC<UserProfileProps> = ({ profile, onSaveProfile }) => 
 const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
-
+    top: 25,
     padding: 10,
   },
   header: {
@@ -184,17 +198,23 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   fieldContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
     marginBottom: 20,
+  },
+  icon: {
+    marginRight: 10,
   },
   label: {
     fontSize: 16,
     color: '#666',
-    marginBottom: 5,
+    flex: 1,
   },
   value: {
     fontSize: 18,
     color: '#333',
     fontWeight: 'bold',
+    flex: 2,
   },
   input: {
     fontSize: 16,
@@ -202,6 +222,7 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#ccc',
     padding: 5,
+    flex: 2,
   },
   buttonContainer: {
     flexDirection: 'row',
@@ -239,7 +260,12 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  
+  loadingOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
 });
 
 export default UserProfile;
