@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert, Keyboard, TouchableWithoutFeedback, Animated, TouchableOpacity, Modal } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Alert, Keyboard, TouchableWithoutFeedback, Animated, TouchableOpacity, Modal, ActivityIndicator } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { BarCodeScanner } from 'expo-barcode-scanner';
 import { db } from '../services/firebase';
@@ -17,6 +17,7 @@ const AdminHomeScreen = () => {
   const [selectedUser, setSelectedUser] = useState<UserProfile | null>(null); // Store the selected user
   const [modalVisible, setModalVisible] = useState(false);
   const [qrCodeValue, setQrCodeValue] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
   const navigation = useNavigation<any>();
 
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -140,6 +141,9 @@ const AdminHomeScreen = () => {
     }
 
     try {
+      setLoading(true);
+      setModalVisible(true); // Display the modal first
+
       const qrCodeRef = await addDoc(collection(db, 'qrcodes'), {
         points: parseInt(points, 10),
         used: false,
@@ -147,9 +151,11 @@ const AdminHomeScreen = () => {
       });
 
       setQrCodeValue(qrCodeRef.id);
-      setModalVisible(true);
+      setLoading(false); // Hide the loading indicator after generating the QR code
     } catch (error) {
       Alert.alert('Error generating QR code:', (error as Error).message);
+      setLoading(false); // Hide the loading indicator if there's an error
+      setModalVisible(false); // Hide the modal if there's an error
     }
   };
 
@@ -234,10 +240,14 @@ const AdminHomeScreen = () => {
           <View style={styles.modalContainer}>
             <View style={styles.modalView}>
               <Text style={styles.modalTitle}>QR Code</Text>
-              {qrCodeValue && (
-                <View style={styles.qrContainer}>
-                  <QRCode value={qrCodeValue} size={200} />
-                </View>
+              {loading ? (
+                <ActivityIndicator size="large" color="#1E90FF" />
+              ) : (
+                qrCodeValue && (
+                  <View style={styles.qrContainer}>
+                    <QRCode value={qrCodeValue} size={200} />
+                  </View>
+                )
               )}
               <TouchableOpacity style={styles.button} onPress={handlePrintQRCode}>
                 <Text style={styles.buttonText}>Print QR Code</Text>
