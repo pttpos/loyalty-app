@@ -12,6 +12,15 @@ import RecentActivities from '../components/RecentActivities';
 import QRModals from '../components/QRModals';
 import BottomMenu from '../components/BottomMenu';
 
+// Configure notification handler
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
+});
+
 const UserHomeScreen = () => {
   const [hasPermission, setHasPermission] = useState<boolean | null>(null);
   const [scanned, setScanned] = useState(false);
@@ -28,12 +37,25 @@ const UserHomeScreen = () => {
   const isDataFetched = useRef(false);
   const navigation = useNavigation<any>();
 
+  // Request permissions for notifications
+  useEffect(() => {
+    const requestPermissions = async () => {
+      const { status } = await Notifications.requestPermissionsAsync();
+      if (status !== 'granted') {
+        alert('You need to enable notifications for this app');
+      }
+    };
+
+    requestPermissions();
+  }, []);
+
   // Function to handle notifications
   const sendNotification = async (title: string, body: string) => {
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
         body,
+        sound: 'default',  // Play the default notification sound
       },
       trigger: null,
     });
@@ -157,7 +179,9 @@ const UserHomeScreen = () => {
                 points: qrCodeData.points,
                 timestamp: transactionData.timestamp
               }]);
-              Alert.alert("Success", `You've received ${qrCodeData.points} points!`);
+
+              // Play success notification sound
+              sendNotification("Success", `You've received ${qrCodeData.points} points!`);
             } else {
               Alert.alert("Error", "This QR code has already been used.");
             }
