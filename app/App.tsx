@@ -13,6 +13,8 @@ import DetailHorizontalBannerPage from './screens/DetailHorizontalBannerPage';
 import HomePage from './screens/HomePage';
 import POSScreen from './screens/POSScreen';
 import MapScreen from './screens/MapScreen';
+import AdminTransactionHistoryScreen from './screens/AdminTransactionHistoryScreen';
+import AdminQrHistoryScreen from './screens/AdminQrHistoryScreen';
 import HorizontalBannerAdminScreen from './screens/HorizontalBannerAdminScreen';
 import CustomDrawerContent from './components/CustomDrawerContent';
 import ChangePrice from './components/ChangePrice';
@@ -30,6 +32,8 @@ const AdminDrawerNavigator = () => (
     <Drawer.Screen name="AdminBannerScreen" component={AdminBannerScreen} />
     <Drawer.Screen name="POSScreen" component={POSScreen} />
     <Drawer.Screen name="HorizontalBannerAdminScreen" component={HorizontalBannerAdminScreen} />
+    <Stack.Screen name="AdminQrHistory" component={AdminQrHistoryScreen} />
+    <Stack.Screen name ="AdminTransactionHistoryScreen" component={AdminTransactionHistoryScreen}/>
   </Drawer.Navigator>
 );
 

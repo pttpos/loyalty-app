@@ -142,8 +142,6 @@ const AdminHomeScreen = () => {
 
     try {
       setLoading(true);
-      setModalVisible(true); // Display the modal first
-
       const qrCodeRef = await addDoc(collection(db, 'qrcodes'), {
         points: parseInt(points, 10),
         used: false,
@@ -151,11 +149,11 @@ const AdminHomeScreen = () => {
       });
 
       setQrCodeValue(qrCodeRef.id);
-      setLoading(false); // Hide the loading indicator after generating the QR code
+      setModalVisible(true);
+      setLoading(false);
     } catch (error) {
+      setLoading(false);
       Alert.alert('Error generating QR code:', (error as Error).message);
-      setLoading(false); // Hide the loading indicator if there's an error
-      setModalVisible(false); // Hide the modal if there's an error
     }
   };
 
@@ -228,6 +226,10 @@ const AdminHomeScreen = () => {
             <Text style={styles.buttonText}>Generate QR Code</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity style={styles.historyButton} onPress={() => navigation.navigate('AdminQrHistory')}>
+          <Text style={styles.historyButtonText}>View QR Code History</Text>
+        </TouchableOpacity>
 
         <Modal
           animationType='slide'
@@ -348,6 +350,18 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   buttonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  historyButton: {
+    backgroundColor: '#32cd32',
+    padding: 15,
+    borderRadius: 10,
+    alignItems: 'center',
+    marginVertical: 10,
+  },
+  historyButtonText: {
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
