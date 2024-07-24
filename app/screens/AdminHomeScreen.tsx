@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, Alert, Keyboard, TouchableWithoutFeedback, Animated, TouchableOpacity, Modal, Button } from 'react-native';
+import { View, Text, StyleSheet, TextInput, Alert, Keyboard, TouchableWithoutFeedback, Animated, TouchableOpacity, Modal } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
 import { BarCodeScanner } from 'expo-barcode-scanner';
-import { db, auth } from '../services/firebase';
+import { db } from '../services/firebase';
 import { doc, updateDoc, getDoc, collection, query, where, getDocs, addDoc } from 'firebase/firestore';
 import { useNavigation } from '@react-navigation/native';
 import UserCard from '../components/UserCard'; // Ensure the import path is correct
@@ -60,6 +60,7 @@ const AdminHomeScreen = () => {
           surname: userData.surname,
           phone: userData.phone,
           birthday: userData.birthday,
+          profileImageUrl: userData.profileImageUrl, // Include profileImageUrl
         };
         setEmail(userData.email);
         setUserPoints(userData.points || 0);
@@ -280,6 +281,7 @@ const styles = StyleSheet.create({
     marginBottom: 20,
   },
   resultContainer: {
+    top:10,
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',

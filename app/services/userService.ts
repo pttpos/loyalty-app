@@ -12,9 +12,10 @@ export interface UserProfile {
   surname: string;
   phone: string;
   birthday: string;
+  profileImageUrl?: string; // Add profileImageUrl to the interface
 }
 
-export const createUserProfile = async (user: { uid: string, email: string, role: string, username: string, surname: string, phone: string, birthday: string }): Promise<void> => {
+export const createUserProfile = async (user: { uid: string, email: string, role: string, username: string, surname: string, phone: string, birthday: string, profileImageUrl?: string }): Promise<void> => {
   try {
     await setDoc(doc(db, 'users', user.uid), {
       email: user.email,
@@ -26,6 +27,7 @@ export const createUserProfile = async (user: { uid: string, email: string, role
       surname: user.surname,
       phone: user.phone,
       birthday: user.birthday,
+      profileImageUrl: user.profileImageUrl, // Save profile image URL
     });
   } catch (error) {
     console.error("Error creating user profile: ", error);
