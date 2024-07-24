@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Modal } from 'react-native';
+import React, { useEffect, useState, useRef } from 'react';
+import { View, Text, Image, StyleSheet, TouchableOpacity, ActivityIndicator, Modal, Animated } from 'react-native';
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from '../services/firebase';
@@ -17,7 +17,9 @@ const DetailBannerPage = () => {
   const [banner, setBanner] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [modalVisible, setModalVisible] = useState(false);
+  const [countdown, setCountdown] = useState('');
   const navigation = useNavigation();
+  const bounceValue = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     const fetchBanner = async () => {
@@ -25,7 +27,10 @@ const DetailBannerPage = () => {
         const bannerRef = doc(db, 'banners', bannerId);
         const bannerDoc = await getDoc(bannerRef);
         if (bannerDoc.exists()) {
-          setBanner(bannerDoc.data());
+          const data = bannerDoc.data();
+          data.postedDate = data.postedDate ? new Date(data.postedDate) : null;
+          data.endTime = data.endTime ? new Date(data.endTime) : null;
+          setBanner(data);
         } else {
           console.error('Banner not found');
         }
@@ -38,6 +43,46 @@ const DetailBannerPage = () => {
 
     fetchBanner();
   }, [bannerId]);
+
+  useEffect(() => {
+    if (banner?.endTime) {
+      const intervalId = setInterval(() => {
+        const now = new Date().getTime();
+        const endTime = new Date(banner.endTime).getTime();
+        const distance = endTime - now;
+
+        if (distance < 0) {
+          clearInterval(intervalId);
+          setCountdown('Event ended');
+        } else {
+          const hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+          const minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+          const seconds = Math.floor((distance % (1000 * 60)) / 1000);
+
+          setCountdown(`${hours}h ${minutes}m ${seconds}s`);
+        }
+      }, 1000);
+
+      return () => clearInterval(intervalId);
+    }
+  }, [banner?.endTime]);
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(bounceValue, {
+          toValue: 1.2,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceValue, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+        }),
+      ]),
+    ).start();
+  }, [bounceValue]);
 
   const toggleModal = () => {
     setModalVisible(!modalVisible);
@@ -68,11 +113,22 @@ const DetailBannerPage = () => {
       </TouchableOpacity>
       <View style={styles.content}>
         <Text style={styles.title}>{banner.title}</Text>
-        <Text style={styles.postedDate}>Posted on: {new Date(banner.postedDate).toLocaleString()}</Text>
-        <Text style={styles.description}>{banner.description}</Text>
         {banner.endTime && (
-          <Text style={styles.endTime}>Ends on: {new Date(banner.endTime).toLocaleString()}</Text>
+          <>
+            <Text style={styles.endTime}>
+              Ends on: {banner.endTime ? banner.endTime.toLocaleString() : 'N/A'}
+            </Text>
+            <View style={styles.countdownContainer}>
+              <Text style={styles.countdownText}>Ends in:</Text>
+              <Text style={styles.countdownTime}>{countdown}</Text>
+            </View>
+          </>
         )}
+        <Text style={styles.postedDate}>
+          Posted on: {banner.postedDate ? banner.postedDate.toLocaleString() : 'N/A'}
+        </Text>
+        <Text style={styles.description}>{banner.description}</Text>
+  
       </View>
 
       <Modal
@@ -105,11 +161,11 @@ const styles = StyleSheet.create({
     paddingVertical: 30,
   },
   backButton: {
-    top:15,
+    top: 15,
     marginRight: 10,
   },
   headerTitle: {
-    top:15,
+    top: 15,
     fontSize: 20,
     color: '#fff',
     fontWeight: 'bold',
@@ -153,7 +209,29 @@ const styles = StyleSheet.create({
   endTime: {
     fontSize: 14,
     color: '#888',
-    textAlign: 'center',
+    textAlign: 'left',
+  },
+  countdownContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: '#f3f3f3',
+    padding: 10,
+    borderRadius: 10,
+    marginVertical: 10,
+  },
+  countdownText: {
+    fontSize: 16,
+    color: '#ff0000',
+  },
+  countdownTime: {
+    fontSize: 16,
+    color: '#ff0000',
+    marginLeft: 5,
+  },
+  soldText: {
+    fontSize: 14,
+    color: '#888',
   },
   loadingContainer: {
     flex: 1,
