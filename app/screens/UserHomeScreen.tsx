@@ -157,15 +157,15 @@ const UserHomeScreen = () => {
                 timestamp: new Date().toISOString()
               };
 
-              // Add transaction to the transactions collection
-              await addDoc(collection(db, 'transactions'), transactionData);
+              // Add transaction to the transactions collection and get the doc reference
+              const transactionRef = await addDoc(collection(db, 'transactions'), transactionData);
 
               // Update user document
               await updateDoc(userRef, {
                 points: newPoints,
                 scannedCodes: arrayUnion(data),
                 recentActivities: arrayUnion({
-                  id: data,
+                  id: transactionRef.id, // Use the transaction document ID as the activity ID
                   description: `Scanned QR code for ${qrCodeData.points} points`,
                   points: qrCodeData.points,
                   timestamp: transactionData.timestamp
@@ -174,7 +174,7 @@ const UserHomeScreen = () => {
 
               setPoints(newPoints);
               setRecentActivities(prevActivities => [...prevActivities, {
-                id: data,
+                id: transactionRef.id, // Use the transaction document ID as the activity ID
                 description: `Scanned QR code for ${qrCodeData.points} points`,
                 points: qrCodeData.points,
                 timestamp: transactionData.timestamp
@@ -197,6 +197,55 @@ const UserHomeScreen = () => {
     }
     setScanningLoading(false); // Stop loading when scanning is done
     setScanned(false);
+  };
+
+  const handlePointDeduction = async (deductionAmount: number) => {
+    try {
+      const userRef = doc(db, 'users', userId!);
+      const userDoc = await getDoc(userRef);
+
+      if (userDoc.exists()) {
+        const currentPoints = userDoc.data().points || 0;
+        if (currentPoints >= deductionAmount) {
+          const newPoints = currentPoints - deductionAmount;
+
+          // Add deduction transaction to the transactions collection and get the doc reference
+          const transactionData = {
+            userId,
+            points: -deductionAmount,
+            description: `Spent ${deductionAmount} points`,
+            timestamp: new Date().toISOString()
+          };
+          const transactionRef = await addDoc(collection(db, 'transactions'), transactionData);
+
+          // Update user document
+          await updateDoc(userRef, {
+            points: newPoints,
+            recentActivities: arrayUnion({
+              id: transactionRef.id, // Use the transaction document ID as the activity ID
+              description: `Spent ${deductionAmount} points`,
+              points: -deductionAmount,
+              timestamp: transactionData.timestamp
+            })
+          });
+
+          setPoints(newPoints);
+          setRecentActivities(prevActivities => [...prevActivities, {
+            id: transactionRef.id, // Use the transaction document ID as the activity ID
+            description: `Spent ${deductionAmount} points`,
+            points: -deductionAmount,
+            timestamp: transactionData.timestamp
+          }]);
+
+          // Send notification for point deduction
+          sendNotification("Points Spent", `You've spent ${deductionAmount} points.`);
+        } else {
+          Alert.alert("Error", "Insufficient points.");
+        }
+      }
+    } catch (error) {
+      Alert.alert("Error", "Failed to deduct points.");
+    }
   };
 
   if (hasPermission === null) {
